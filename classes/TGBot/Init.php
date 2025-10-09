@@ -33,9 +33,6 @@ class Init {
         add_filter( 'manage_users_custom_column', [ $this, 'show_tg_nickname_column' ], 10, 3 );
         add_filter( 'manage_users_sortable_columns', [ $this, 'make_tg_nickname_sortable' ] );
         add_action( 'pre_get_users', [ $this, 'sort_tg_nickname_column' ] );
-
-        //Plugin Updater
-        add_action( 'init', [ $this, 'init_plugin_updater' ] );
     }
 
     /**
@@ -225,18 +222,6 @@ class Init {
         if ( $orderby == 'tg_nickname' ) {
             $query->set( 'meta_key', 'tg_nickname' );
             $query->set( 'orderby', 'meta_value' );
-        }
-    }
-
-    function init_plugin_updater(): void {
-        if ( is_admin() ) {
-            global $tgbot_options;
-            new BitbucketPluginUpdater(
-                    TGBOT_PLUGIN_MAIN_FILE, // Путь к главному файлу плагина
-                    'mcarena77', // Workspace slug (например, 'mycompany')
-                    'tg-bot', // Название репозитория
-                    $tgbot_options->get_option( 'upd_bitbucket_token' ) ?? '' // API Token (опционально, для приватных репозиториев)
-            );
         }
     }
 }
