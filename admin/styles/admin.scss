@@ -1,0 +1,7 @@
+.wpt-form {
+  input {
+    &[type=text], &[type=url], [type=phone], [type=email] {
+      width: 100%;
+    }
+  }
+}

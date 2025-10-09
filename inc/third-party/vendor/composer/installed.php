@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'makaravich/tg-bot',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '6c7e0532d5d98363bfd65d8c643deeae806654ff',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
+    ),
+    'versions' => array(
+        'makaravich/simple-tg-bot' => array(
+            'pretty_version' => 'v0.1.17',
+            'version' => '0.1.17.0',
+            'reference' => '021db8293a45960f6c6138a5a4bb5134db7acbae',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../makaravich/simple-tg-bot',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'makaravich/tg-bot' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '6c7e0532d5d98363bfd65d8c643deeae806654ff',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'makaravich/wptoptions' => array(
+            'pretty_version' => 'v0.0.10',
+            'version' => '0.0.10.0',
+            'reference' => '2d64dab30b30a1546b5fc29f0e0f48d5bbd6d6e9',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../makaravich/wptoptions',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);

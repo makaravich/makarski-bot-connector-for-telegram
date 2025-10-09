@@ -1,0 +1,27 @@
+{
+  "name": "makaravich/tg-bot",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "gpl20",
+  "authors": [
+    {
+      "name": "mcarena",
+      "email": "dmakar.sky@gmail.com"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/makaravich/wptoptions"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/makaravich/SimpleTgBot"
+    }
+  ],
+  "require": {
+    "makaravich/wptoptions": "0.0.10",
+    "makaravich/simple-tg-bot": "0.1.17",
+    "ext-gd": "*"
+  }
+}

@@ -1,0 +1,5 @@
+.wpt-form input[type=text], .wpt-form input[type=url], .wpt-form input [type=phone], .wpt-form input [type=email] {
+  width: 100%;
+}
+
+/*# sourceMappingURL=admin.css.map */

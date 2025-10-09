@@ -1,0 +1,101 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Telegram Messenger Integration\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-31 13:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.7.1; wp-6.7.2\n"
+"X-Domain: tgbot"
+
+#. Description of the plugin
+msgid "Allows you to manage your Telegram bot via WordPress"
+msgstr ""
+
+#: inc/tgbot_options.php:30
+msgid "Automatically set the webhook when save"
+msgstr ""
+
+#: classes/TGBot/Core.php:45
+msgid "Back"
+msgstr ""
+
+#. Author of the plugin
+msgid "Dzmitry Makarski"
+msgstr ""
+
+#: classes/TGBot/Init.php:136
+msgid "Enter your nick in Telegram (without @)"
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:34 classes/TGBot/ProcessMessages.php:82
+msgid "Error"
+msgstr ""
+
+#: classes/TGBot/Core.php:57
+msgid "Next"
+msgstr ""
+
+#: inc/tgbot_options.php:13
+msgid "Save"
+msgstr ""
+
+#: classes/TGBot/TGBotCommands.php:14
+msgid "Start command"
+msgstr ""
+
+#: inc/tgbot_options.php:26
+msgid "Telegram endpoint"
+msgstr ""
+
+#: inc/tgbot_options.php:9
+msgid "Telegram Integration Options"
+msgstr ""
+
+#. Name of the plugin
+msgid "Telegram Messenger Integration"
+msgstr ""
+
+#: classes/TGBot/Init.php:150
+msgid "Telegram Nickname"
+msgstr ""
+
+#: inc/tgbot_options.php:19
+msgid "Telegram options"
+msgstr ""
+
+#: inc/tgbot_options.php:11
+msgid "Telegram settings"
+msgstr ""
+
+#: inc/tgbot_options.php:22
+msgid "Telegram Token"
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:120
+msgid "The Chat ID is empty."
+msgstr ""
+
+#: classes/TGBot/Init.php:44
+msgid "This is an awesome Telegram bot! 😉"
+msgstr ""
+
+#: classes/TGBot/TGBot.php:12
+msgid "Too long command"
+msgstr ""
+
+#: classes/TGBot/TGBot.php:28
+msgid "Unknown command: "
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:163
+msgid "User already exists."
+msgstr ""

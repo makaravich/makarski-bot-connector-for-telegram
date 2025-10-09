@@ -1,0 +1,87 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "4d47482ef46d73ca529aeb4bcf45609f",
+    "packages": [
+        {
+            "name": "makaravich/simple-tg-bot",
+            "version": "v0.1.17",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/makaravich/SimpleTgBot.git",
+                "reference": "021db8293a45960f6c6138a5a4bb5134db7acbae"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/makaravich/SimpleTgBot/zipball/021db8293a45960f6c6138a5a4bb5134db7acbae",
+                "reference": "021db8293a45960f6c6138a5a4bb5134db7acbae",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": ">=8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "\\": "src/"
+                },
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "description": "A simple PHP class for interacting with the Telegram Bot API. This class makes it easy to send and receive messages, photos, and documents, as well as manage webhooks.",
+            "support": {
+                "source": "https://github.com/makaravich/SimpleTgBot/tree/v0.1.17",
+                "issues": "https://github.com/makaravich/SimpleTgBot/issues"
+            },
+            "time": "2025-09-25T19:03:28+00:00"
+        },
+        {
+            "name": "makaravich/wptoptions",
+            "version": "v0.0.10",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/makaravich/wptOptions.git",
+                "reference": "2d64dab30b30a1546b5fc29f0e0f48d5bbd6d6e9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/makaravich/wptOptions/zipball/2d64dab30b30a1546b5fc29f0e0f48d5bbd6d6e9",
+                "reference": "2d64dab30b30a1546b5fc29f0e0f48d5bbd6d6e9",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "description": "The class allows to easy adding options page to the WordPress plugins, themes, etc",
+            "support": {
+                "source": "https://github.com/makaravich/wptOptions/tree/v0.0.10",
+                "issues": "https://github.com/makaravich/wptOptions/issues"
+            },
+            "time": "2025-03-16T14:16:53+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "ext-gd": "*"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}
