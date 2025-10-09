@@ -53,6 +53,61 @@ class BitbucketPluginUpdater {
         add_filter( 'upgrader_source_selection', [ $this, 'fix_source_folder' ], 10, 3 );
 
         $this->log( 'Хуки зарегистрированы успешно' );
+
+        // Добавляем диагностические хуки для проверки
+        add_action( 'admin_init', [ $this, 'diagnostic_check' ] );
+    }
+
+    /**
+     * Диагностическая проверка (выполняется в админке)
+     */
+    public function diagnostic_check() {
+        // Проверяем только раз в час, чтобы не спамить логи
+        $diagnostic_key = $this->cache_key . '_diagnostic';
+        if ( get_transient( $diagnostic_key ) ) {
+            return;
+        }
+        set_transient( $diagnostic_key, true, HOUR_IN_SECONDS );
+
+        $this->log( '=== ДИАГНОСТИКА ЗАПУЩЕНА ===' );
+        $this->log( 'admin_init хук сработал', [
+            'is_admin'     => is_admin(),
+            'current_user' => get_current_user_id(),
+            'current_page' => isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : 'не определена'
+        ] );
+
+        // Проверяем, есть ли плагин в списке установленных
+        $all_plugins = get_plugins();
+        $plugin_exists = isset( $all_plugins[ $this->plugin_slug ] );
+
+        $this->log( 'Статус плагина в системе', [
+            'plugin_slug'   => $this->plugin_slug,
+            'plugin_exists' => $plugin_exists,
+            'is_active'     => is_plugin_active( $this->plugin_slug ),
+            'total_plugins' => count( $all_plugins )
+        ] );
+
+        // Проверяем transient с обновлениями
+        $update_plugins = get_site_transient( 'update_plugins' );
+        $this->log( 'Текущий transient update_plugins', [
+            'exists'         => $update_plugins !== false,
+            'has_response'   => isset( $update_plugins->response ),
+            'has_checked'    => isset( $update_plugins->checked ),
+            'response_count' => isset( $update_plugins->response ) ? count( (array) $update_plugins->response ) : 0,
+            'our_plugin_in_response' => isset( $update_plugins->response[ $this->plugin_slug ] )
+        ] );
+
+        // Принудительная проверка обновления
+        $this->log( '--- ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА ОБНОВЛЕНИЯ ---' );
+        $remote_info = $this->get_remote_info();
+
+        if ( $remote_info ) {
+            $this->log( 'Принудительная проверка: удалённая версия получена', $remote_info );
+        } else {
+            $this->log( 'ОШИБКА принудительной проверки: не удалось получить информацию' );
+        }
+
+        $this->log( '=== ДИАГНОСТИКА ЗАВЕРШЕНА ===' );
     }
 
     /**
@@ -400,11 +455,45 @@ class BitbucketPluginUpdater {
      */
     public function clear_cache() {
         $result = delete_transient( $this->cache_key );
+        delete_transient( $this->cache_key . '_diagnostic' ); // Очищаем и диагностический кэш
         $this->log( 'Очистка кэша', [
             'cache_key' => $this->cache_key,
             'success'   => $result
         ] );
         return $result;
+    }
+
+    /**
+     * Принудительная проверка обновлений (для ручного вызова)
+     */
+    public function force_check() {
+        $this->log( '=== ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА ЗАПУЩЕНА ВРУЧНУЮ ===' );
+
+        // Очищаем кэш
+        $this->clear_cache();
+        delete_site_transient( 'update_plugins' );
+
+        $this->log( 'Кэш очищен, запрашиваем информацию' );
+
+        // Получаем информацию
+        $remote_info = $this->get_remote_info();
+
+        if ( $remote_info ) {
+            $this->log( '✅ Информация получена успешно', $remote_info );
+
+            // Сравниваем версии
+            $needs_update = version_compare( $this->version, $remote_info['version'], '<' );
+            $this->log( 'Результат сравнения версий', [
+                'current'      => $this->version,
+                'remote'       => $remote_info['version'],
+                'needs_update' => $needs_update
+            ] );
+
+            return $remote_info;
+        } else {
+            $this->log( '❌ Не удалось получить информацию' );
+            return false;
+        }
     }
 
     /**
@@ -433,20 +522,47 @@ class BitbucketPluginUpdater {
 
 require_once plugin_dir_path(__FILE__) . 'includes/class-bitbucket-updater.php';
 
+// ВАЖНО: Сохраните экземпляр в глобальную переменную для доступа
+global $my_bitbucket_updater;
+
 function init_my_plugin_updater() {
     if (is_admin()) {
-        new \TGBot\BitbucketPluginUpdater(
+        global $my_bitbucket_updater;
+        $my_bitbucket_updater = new \TGBot\BitbucketPluginUpdater(
             __FILE__, // Путь к главному файлу плагина
             'your-workspace-slug', // Workspace slug (например, 'mycompany')
             'your-repo-name', // Название репозитория
             'your-api-token', // API Token (опционально, для приватных репозиториев)
-            true // Включить логирование (по умолчанию true, можно убрать в продакшене)
+            true // Включить логирование (по умолчанию true)
         );
     }
 }
-add_action('init', 'init_my_plugin_updater');
+add_action('plugins_loaded', 'init_my_plugin_updater');
 
-// Для просмотра логов можете добавить в админку:
+// Добавьте кнопку для принудительной проверки в админке
+add_action('admin_notices', function() {
+    $screen = get_current_screen();
+    if ($screen->id === 'plugins' || $screen->id === 'update-core') {
+        if (isset($_GET['bitbucket_force_check']) && $_GET['bitbucket_force_check'] === '1') {
+            global $my_bitbucket_updater;
+            if ($my_bitbucket_updater) {
+                $result = $my_bitbucket_updater->force_check();
+                echo '<div class="notice notice-info"><p>';
+                echo $result ? '✅ Проверка обновлений выполнена. Проверьте логи.' : '❌ Ошибка при проверке. Проверьте логи.';
+                echo '</p></div>';
+            }
+        }
+
+        $check_url = add_query_arg('bitbucket_force_check', '1');
+        echo '<div class="notice notice-warning"><p>';
+        echo '<strong>Bitbucket Updater:</strong> ';
+        echo '<a href="' . esc_url($check_url) . '" class="button button-small">Принудительно проверить обновления</a> ';
+        echo '| Проверьте логи в error_log';
+        echo '</p></div>';
+    }
+});
+
+// Для просмотра логов добавьте страницу в админке:
 add_action('admin_menu', function() {
     add_submenu_page(
         'plugins.php',
@@ -455,18 +571,41 @@ add_action('admin_menu', function() {
         'manage_options',
         'bitbucket-updater-logs',
         function() {
-            global $bitbucket_updater; // Сохраните экземпляр класса в глобальную переменную
-            if (isset($bitbucket_updater)) {
-                echo '<div class="wrap">';
-                echo '<h1>Bitbucket Updater Logs</h1>';
-                echo '<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 600px;">';
-                echo esc_html($bitbucket_updater->get_logs());
-                echo '</pre>';
-                echo '</div>';
+            global $my_bitbucket_updater;
+            echo '<div class="wrap">';
+            echo '<h1>Bitbucket Updater Logs</h1>';
+
+            if (isset($_GET['clear_logs'])) {
+                // Очистка только диагностического кэша
+                if ($my_bitbucket_updater) {
+                    delete_transient($my_bitbucket_updater->cache_key . '_diagnostic');
+                }
+                echo '<div class="notice notice-success"><p>Диагностический кэш очищен. Перезагрузите страницу плагинов для новой диагностики.</p></div>';
             }
+
+            echo '<p>';
+            echo '<a href="' . admin_url('plugins.php?page=bitbucket-updater-logs&clear_logs=1') . '" class="button">Очистить диагностический кэш</a> ';
+            echo '<a href="' . admin_url('plugins.php?bitbucket_force_check=1') . '" class="button button-primary">Принудительная проверка</a>';
+            echo '</p>';
+
+            if (isset($my_bitbucket_updater)) {
+                echo '<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 600px; border: 1px solid #ddd;">';
+                $logs = $my_bitbucket_updater->get_logs();
+                echo $logs ? esc_html($logs) : 'Логов пока нет. Попробуйте принудительную проверку.';
+                echo '</pre>';
+            } else {
+                echo '<div class="notice notice-error"><p>Updater не инициализирован</p></div>';
+            }
+            echo '</div>';
         }
     );
 });
+
+// ОТЛАДКА: Что делать если логов нет после "Хуки зарегистрированы успешно":
+// 1. Зайдите на страницу "Плагины" в админке - это запустит диагностику
+// 2. Проверьте логи через "Плагины -> Updater Logs"
+// 3. Нажмите кнопку "Принудительно проверить обновления"
+// 4. Убедитесь что в Bitbucket есть хотя бы один тег (релиз)
 
 // Как создать API Token в Bitbucket (новая система):
 // 1. Зайдите в Bitbucket Settings -> Personal settings -> API tokens
