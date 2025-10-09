@@ -233,7 +233,7 @@ class Init {
             global $tgbot_options;
             new BitbucketPluginUpdater(
                     TGBOT_PLUGIN_MAIN_FILE, // Путь к главному файлу плагина
-                    'tgbot', // Workspace slug (например, 'mycompany')
+                    'mcarena77', // Workspace slug (например, 'mycompany')
                     'tg-bot', // Название репозитория
                     $tgbot_options->get_option( 'upd_bitbucket_token' ) ?? '' // API Token (опционально, для приватных репозиториев)
             );
