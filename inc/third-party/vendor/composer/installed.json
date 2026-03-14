@@ -2,17 +2,17 @@
     "packages": [
         {
             "name": "makaravich/simple-tg-bot",
-            "version": "v0.1.17",
-            "version_normalized": "0.1.17.0",
+            "version": "v0.1.18",
+            "version_normalized": "0.1.18.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/makaravich/SimpleTgBot.git",
-                "reference": "021db8293a45960f6c6138a5a4bb5134db7acbae"
+                "reference": "e8a081eea034ec6b4d2f319e67906a0d83d6e0ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/makaravich/SimpleTgBot/zipball/021db8293a45960f6c6138a5a4bb5134db7acbae",
-                "reference": "021db8293a45960f6c6138a5a4bb5134db7acbae",
+                "url": "https://api.github.com/repos/makaravich/SimpleTgBot/zipball/e8a081eea034ec6b4d2f319e67906a0d83d6e0ed",
+                "reference": "e8a081eea034ec6b4d2f319e67906a0d83d6e0ed",
                 "shasum": ""
             },
             "require": {
@@ -20,7 +20,7 @@
                 "ext-json": "*",
                 "php": ">=8.0"
             },
-            "time": "2025-09-25T19:03:28+00:00",
+            "time": "2025-12-25T13:23:45+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -33,7 +33,7 @@
             },
             "description": "A simple PHP class for interacting with the Telegram Bot API. This class makes it easy to send and receive messages, photos, and documents, as well as manage webhooks.",
             "support": {
-                "source": "https://github.com/makaravich/SimpleTgBot/tree/v0.1.17",
+                "source": "https://github.com/makaravich/SimpleTgBot/tree/v0.1.18",
                 "issues": "https://github.com/makaravich/SimpleTgBot/issues"
             },
             "install-path": "../makaravich/simple-tg-bot"

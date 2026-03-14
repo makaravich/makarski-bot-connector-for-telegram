@@ -193,7 +193,7 @@ class ProcessMessages {
 
 		$multimedia_message = self::prepare_multimedia_message( $bot, $user_id, $message );
 		if ( $multimedia_message /* && ( ! empty( $multimedia_message->text ) && ! empty( $multimedia_message->files ) )*/ ) {
-			//error_log( '{Multimedia Message Debugging} ' . print_r( $multimedia_message, true ) );
+			error_log( '{Multimedia Message Debugging} ' . print_r( $multimedia_message, true ) );
 
 			do_action( 'tgbot_process_multimedia_message', $bot, $user_id, $multimedia_message );
 		}
@@ -204,44 +204,90 @@ class ProcessMessages {
 		return false;
 	}
 
-	private static function prepare_multimedia_message( $bot, $user_id, $original_message ): object {
-		$group_id = $original_message->message->media_group_id ?? 0;
+	/**
+	 * Prepare a multimedia message object
+	 *
+	 * @param $bot
+	 * @param $user_id
+	 * @param object|string $original_message
+	 *
+	 * @return object
+	 */
+	private static function prepare_multimedia_message( $bot, $user_id, object|string $original_message ): object {
+		$message       = $original_message->message;
+		$document_type = self::detect_media_type( $message );
 
-		if ( $original_message->message->photo ||
-		     $original_message->message->document ||
-		     $original_message->message->video ||
-		     $original_message->message->audio ||
-		     $original_message->message->voice ||
-		     $original_message->message->video_note ||
-		     $original_message->message->sticker
-		) {
-			$document_url  = self::$bot->get_document_url( $original_message );
-			$document_type = $original_message->message->photo ? 'image' : '';
-
-			$msg = [
-				'text'            => $original_message->message->caption ?? '',
-				'files'           => [],
-				'has_media_group' => (bool) $group_id != 0,
-				'type'            => $document_type,
-			];
-
-			if ( ! empty( trim( $document_url ) ) ) {
-				$document_wp = self::download_remote_file_to_media_library( $document_url );
-
-				if ( ! empty( $document_wp['attachment_id'] ) ) {
-					$msg['files'][] = $document_wp['attachment_id'];
-				}
-			}
-		} else {
-			$msg = [
-				'text'            => $original_message->message->text ?? '',
-				'files'           => [],
-				'has_media_group' => false,
-				'type'            => 'text'
-			];
+		if ( $document_type ) {
+			return self::prepare_media_message( $message, $document_type, $original_message );
 		}
 
-		return (object) $msg;
+		return self::prepare_text_message( $message );
+	}
+
+	/**
+	 * Detect media type from message
+	 */
+	private static function detect_media_type( $message ): string {
+		$media_types = [
+			'photo'      => 'image',
+			'video'      => 'video',
+			'audio'      => 'audio',
+			'voice'      => 'voice',
+			'video_note' => 'video_note',
+			'sticker'    => 'sticker',
+			'document'   => 'document',
+		];
+
+		return array_reduce(
+			array_keys( $media_types ),
+			fn( $carry, $type ) => $carry ?: ( ! empty( $message->$type ) ? $media_types[ $type ] : '' ),
+			''
+		);
+	}
+
+	/**
+	 * Prepare media message object
+	 */
+	private static function prepare_media_message( $message, string $document_type, $original_message ): object {
+		$group_id = $message->media_group_id ?? 0;
+		$files    = self::download_media_file( $original_message );
+
+		return (object) [
+			'text'            => $message->caption ?? '',
+			'files'           => $files,
+			'has_media_group' => (bool) $group_id,
+			'type'            => $document_type,
+		];
+	}
+
+	/**
+	 * Download media file and return attachment IDs
+	 */
+	private static function download_media_file( $original_message ): array {
+		$files        = [];
+		$document_url = self::$bot->get_document_url( $original_message );
+
+		if ( ! empty( trim( $document_url ) ) ) {
+			$document_wp = self::download_remote_file_to_media_library( $document_url );
+
+			if ( ! empty( $document_wp['attachment_id'] ) ) {
+				$files[] = $document_wp['attachment_id'];
+			}
+		}
+
+		return $files;
+	}
+
+	/**
+	 * Prepare text-only message object
+	 */
+	private static function prepare_text_message( $message ): object {
+		return (object) [
+			'text'            => $message->text ?? '',
+			'files'           => [],
+			'has_media_group' => false,
+			'type'            => 'text',
+		];
 	}
 
 	/**
