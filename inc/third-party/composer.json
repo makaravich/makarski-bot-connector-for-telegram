@@ -21,7 +21,7 @@
   ],
   "require": {
     "makaravich/wptoptions": "0.0.10",
-    "makaravich/simple-tg-bot": "0.1.17",
+    "makaravich/simple-tg-bot": "0.1.18",
     "ext-gd": "*"
   }
 }
