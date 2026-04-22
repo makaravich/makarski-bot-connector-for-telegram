@@ -7,32 +7,32 @@ class Init {
 
     public function __construct() {
         $this->bot_map = [
-                'auto_exec'    => false,
+                'auto_exec' => false,
                 'help_message' => self::get_help_message(),
         ];
 
         // Add styles and scripts on admin side
-        add_action( 'admin_enqueue_scripts', [ $this, 'add_admin_assets' ] );
+        add_action('admin_enqueue_scripts', [$this, 'add_admin_assets']);
 
         // Call "TG page"
-        add_action( 'init', [ $this, 'custom_rewrite_rule' ] );
-        add_filter( 'query_vars', [ $this, 'custom_query_vars' ] );
-        add_action( 'template_redirect', [ $this, 'custom_action_handler' ] );
+        add_action('init', [$this, 'custom_rewrite_rule']);
+        add_filter('query_vars', [$this, 'custom_query_vars']);
+        add_action('template_redirect', [$this, 'custom_action_handler']);
 
         // Run required functions
-        add_action( 'init', function () {
+        add_action('init', function () {
             \TGBot\ProcessMessages::init();
-        }, 999 );
+        }, 999);
 
         // User custom fields
-        add_action( 'personal_options_update', [ $this, 'save_tg_nickname_field' ] );
-        add_action( 'edit_user_profile_update', [ $this, 'save_tg_nickname_field' ] );
-        add_action( 'show_user_profile', [ $this, 'add_tg_nickname_field' ] );
-        add_action( 'edit_user_profile', [ $this, 'add_tg_nickname_field' ] );
-        add_filter( 'manage_users_columns', [ $this, 'add_tg_nickname_column' ] );
-        add_filter( 'manage_users_custom_column', [ $this, 'show_tg_nickname_column' ], 10, 3 );
-        add_filter( 'manage_users_sortable_columns', [ $this, 'make_tg_nickname_sortable' ] );
-        add_action( 'pre_get_users', [ $this, 'sort_tg_nickname_column' ] );
+        add_action('personal_options_update', [$this, 'save_tg_nickname_field']);
+        add_action('edit_user_profile_update', [$this, 'save_tg_nickname_field']);
+        add_action('show_user_profile', [$this, 'add_tg_nickname_field']);
+        add_action('edit_user_profile', [$this, 'add_tg_nickname_field']);
+        add_filter('manage_users_columns', [$this, 'add_tg_nickname_column']);
+        add_filter('manage_users_custom_column', [$this, 'show_tg_nickname_column'], 10, 3);
+        add_filter('manage_users_sortable_columns', [$this, 'make_tg_nickname_sortable']);
+        add_action('pre_get_users', [$this, 'sort_tg_nickname_column']);
     }
 
     /**
@@ -41,9 +41,9 @@ class Init {
      * @return string
      */
     public static function get_help_message(): string {
-        $default_message = __( 'This is an awesome Telegram bot! 😉', 'tgbot' );
+        $default_message = __('This is an awesome Telegram bot! 😉', 'tgbot');
 
-        return apply_filters( 'tgbot_help_message', $default_message );
+        return apply_filters('tgbot_help_message', $default_message);
     }
 
     /**
@@ -53,14 +53,14 @@ class Init {
      *
      * @return void
      */
-    public function add_admin_assets( $hook ): void {
-        wp_enqueue_style( 'linksh-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/styles/admin.css', [], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/styles/admin.css' ) );
+    public function add_admin_assets($hook): void {
+        wp_enqueue_style('linksh-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/styles/admin.css', [], filemtime(TGBOT_PLUGIN_BASEPATH . '/admin/styles/admin.css'));
 
-        if ( 'edit.php' == $hook ) {
-            wp_enqueue_script( 'linksh-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [
+        if ('edit.php' == $hook) {
+            wp_enqueue_script('linksh-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [
                     'jquery',
                     'wp-util'
-            ], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js' ), true );
+            ], filemtime(TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js'), true);
         }
     }
 
@@ -71,9 +71,9 @@ class Init {
      */
     public static function custom_rewrite_rule(): void {
         global $tgbot_options;
-        $regex = '^' . $tgbot_options->get_option( 'gen_tg_endpoint' ) . '/?$';
+        $regex = '^' . $tgbot_options->get_option('gen_tg_endpoint') . '/?$';
 
-        add_rewrite_rule( $regex, 'index.php?tgbot_action=tg_call', 'top' );
+        add_rewrite_rule($regex, 'index.php?tgbot_action=tg_call', 'top');
     }
 
 
@@ -84,41 +84,49 @@ class Init {
      *
      * @return mixed
      */
-    function custom_query_vars( $query_vars ): mixed {
+    function custom_query_vars($query_vars): mixed {
         $query_vars[] = 'tgbot_action';
 
         return $query_vars;
     }
 
     public static function finish_request(): void {
-        if ( ob_get_level() ) {
+        if (ob_get_level()) {
             ob_end_clean();
         }
 
-        header( "Content-Encoding: none" );
-        header( "Connection: close" );
-        ignore_user_abort( true );
+        header("Content-Encoding: none");
+        header("Connection: close");
+        ignore_user_abort(true);
 
         // Send response
         echo 'OK';
         $size = ob_get_length();
-        header( "Content-Length: $size" );
+        header("Content-Length: $size");
         ob_end_flush();
         flush();
     }
 
     function custom_action_handler(): void {
-        $custom_action = get_query_var( 'tgbot_action' );
+        $custom_action = get_query_var('tgbot_action');
 
-        if ( $custom_action === 'tg_call' ) {
+        if ($custom_action === 'tg_call') {
             self::finish_request();
 
             global $tgbot_options;
-            $bot = new TGBot( $tgbot_options->get_option( 'gen_tg_token' ), true, $this->bot_map );
+            $bot = new TGBot($tgbot_options->get_option('gen_tg_token'), true, $this->bot_map);
 
-            //error_log( '{DEBUG} Bot call' );
+            $request_respond = $bot->get_request();
+            error_log('{DEBUG} Bot request: ' . print_r($request_respond, true));
 
-            do_action( 'tgbot_bot_call', $bot );
+            do_action('tgbot_bot_call', $bot);
+
+            if (!empty($request_respond->pre_checkout_query)) {
+                // It is possible to handle pre-checkout query here
+                $user_id = $request_respond->pre_checkout_query->from->id;
+                do_action('tgbot_pre_checkout_query', $bot, $request_respond->pre_checkout_query, $user_id);
+            }
+
             exit; // Terminate execution to avoid loading theme
         }
     }
@@ -130,11 +138,11 @@ class Init {
      *
      * @return false|void
      */
-    function save_tg_nickname_field( $user_id ) {
-        if ( ! current_user_can( 'edit_user', $user_id ) ) {
+    function save_tg_nickname_field($user_id) {
+        if (!current_user_can('edit_user', $user_id)) {
             return false;
         }
-        update_user_meta( $user_id, 'tg_nickname', sanitize_text_field( $_POST['tg_nickname'] ) );
+        update_user_meta($user_id, 'tg_nickname', sanitize_text_field($_POST['tg_nickname']));
     }
 
     /**
@@ -144,7 +152,7 @@ class Init {
      *
      * @return void
      */
-    function add_tg_nickname_field( $user ): void {
+    function add_tg_nickname_field($user): void {
         ?>
         <h3>Telegram</h3>
         <table class="form-table">
@@ -152,9 +160,9 @@ class Init {
                 <th><label for="tg_nickname">Telegram Nickname</label></th>
                 <td>
                     <input type="text" name="tg_nickname" id="tg_nickname"
-                           value="<?php echo esc_attr( get_the_author_meta( 'tg_nickname', $user->ID ) ); ?>"
+                           value="<?php echo esc_attr(get_the_author_meta('tg_nickname', $user->ID)); ?>"
                            class="regular-text"/>
-                    <p class="description"><?php _e( 'Enter your nick in Telegram (without @)', 'tgbot' ) ?></p>
+                    <p class="description"><?php _e('Enter your nick in Telegram (without @)', 'tgbot') ?></p>
                 </td>
             </tr>
         </table>
@@ -168,8 +176,8 @@ class Init {
      *
      * @return mixed
      */
-    function add_tg_nickname_column( $columns ): mixed {
-        $columns['tg_nickname'] = __( 'Telegram Nickname', 'tgbot' );
+    function add_tg_nickname_column($columns): mixed {
+        $columns['tg_nickname'] = __('Telegram Nickname', 'tgbot');
 
         return $columns;
     }
@@ -183,11 +191,11 @@ class Init {
      *
      * @return mixed|string
      */
-    function show_tg_nickname_column( $value, $column_name, $user_id ): mixed {
-        if ( $column_name == 'tg_nickname' ) {
-            $tg_nickname = get_user_meta( $user_id, 'tg_nickname', true );
+    function show_tg_nickname_column($value, $column_name, $user_id): mixed {
+        if ($column_name == 'tg_nickname') {
+            $tg_nickname = get_user_meta($user_id, 'tg_nickname', true);
 
-            return $tg_nickname ? esc_html( $tg_nickname ) : '—';
+            return $tg_nickname ? esc_html($tg_nickname) : '—';
         }
 
         return $value;
@@ -200,7 +208,7 @@ class Init {
      *
      * @return mixed
      */
-    function make_tg_nickname_sortable( $columns ): mixed {
+    function make_tg_nickname_sortable($columns): mixed {
         $columns['tg_nickname'] = 'tg_nickname';
 
         return $columns;
@@ -213,15 +221,15 @@ class Init {
      *
      * @return void
      */
-    function sort_tg_nickname_column( $query ): void {
-        if ( ! is_admin() ) {
+    function sort_tg_nickname_column($query): void {
+        if (!is_admin()) {
             return;
         }
 
-        $orderby = $query->get( 'orderby' );
-        if ( $orderby == 'tg_nickname' ) {
-            $query->set( 'meta_key', 'tg_nickname' );
-            $query->set( 'orderby', 'meta_value' );
+        $orderby = $query->get('orderby');
+        if ($orderby == 'tg_nickname') {
+            $query->set('meta_key', 'tg_nickname');
+            $query->set('orderby', 'meta_value');
         }
     }
 }

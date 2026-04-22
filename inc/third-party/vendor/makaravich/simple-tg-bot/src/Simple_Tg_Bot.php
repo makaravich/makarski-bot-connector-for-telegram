@@ -3,7 +3,7 @@
 /**
  * This class allows you to interact with Telegram Bot API
  *
- * V. 0.1.18
+ * V. 0.1.22
  */
 class Simple_Tg_Bot
 {
@@ -407,6 +407,65 @@ class Simple_Tg_Bot
             'document' => new CURLFile($document_path),
             'caption' => $caption
         ];
+
+        return $this->send_request($url, $data);
+    }
+
+    /**
+     * Sending an invoice in the Telegram Stars
+     *
+     * @param $title
+     * @param $description
+     * @param $payload
+     * @param $stars_amount
+     * @param string $chat_id
+     * @return mixed
+     */
+    public function send_stars_invoice($title, $description, $payload, $stars_amount, string $chat_id = ''): mixed {
+        if ($chat_id === '') {
+            $chat_id = $this->chat_id;
+        }
+
+        $url = $this->api_url . "sendInvoice";
+
+        $data = [
+            'chat_id' => $chat_id,
+            'title' => $title,
+            'description' => $description,
+            'payload' => $payload,     // For example, "buy:premium_30d:user123"
+            'currency' => 'XTR',
+            'prices' => json_encode([
+                [
+                    'label' => $title,
+                    'amount' => $stars_amount
+                ]
+            ], JSON_UNESCAPED_UNICODE),
+            'need_name' => false,
+            'need_phone_number' => false,
+            'need_email' => false,
+        ];
+
+        return $this->send_request($url, $data);
+    }
+
+    /**
+     * Sending a respond to the checkout query
+     *
+     * @param $pre_checkout_query_id
+     * @param bool $ok
+     * @param $error_message
+     * @return mixed
+     */
+    public function answer_pre_checkout_query($pre_checkout_query_id, bool $ok = true, $error_message = null): mixed {
+        $url = $this->api_url . "answerPreCheckoutQuery";
+        $data = [
+            'pre_checkout_query_id' => $pre_checkout_query_id,
+            'ok' => $ok,
+        ];
+
+        if ($error_message) {
+            $data['error_message'] = $error_message;
+        }
 
         return $this->send_request($url, $data);
     }

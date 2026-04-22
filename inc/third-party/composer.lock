@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b5271c5ca16a45ecc902f0aeaab7f328",
+    "content-hash": "3653e219fb94b9233cb780759c53507e",
     "packages": [
         {
             "name": "makaravich/simple-tg-bot",
-            "version": "v0.1.18",
+            "version": "v0.1.23",
             "source": {
                 "type": "git",
                 "url": "https://github.com/makaravich/SimpleTgBot.git",
-                "reference": "e8a081eea034ec6b4d2f319e67906a0d83d6e0ed"
+                "reference": "dcd73a0ee076cdadee1abfad1f4cf84980d2f582"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/makaravich/SimpleTgBot/zipball/e8a081eea034ec6b4d2f319e67906a0d83d6e0ed",
-                "reference": "e8a081eea034ec6b4d2f319e67906a0d83d6e0ed",
+                "url": "https://api.github.com/repos/makaravich/SimpleTgBot/zipball/dcd73a0ee076cdadee1abfad1f4cf84980d2f582",
+                "reference": "dcd73a0ee076cdadee1abfad1f4cf84980d2f582",
                 "shasum": ""
             },
             "require": {
@@ -36,10 +36,10 @@
             },
             "description": "A simple PHP class for interacting with the Telegram Bot API. This class makes it easy to send and receive messages, photos, and documents, as well as manage webhooks.",
             "support": {
-                "source": "https://github.com/makaravich/SimpleTgBot/tree/v0.1.18",
+                "source": "https://github.com/makaravich/SimpleTgBot/tree/v0.1.23",
                 "issues": "https://github.com/makaravich/SimpleTgBot/issues"
             },
-            "time": "2025-12-25T13:23:45+00:00"
+            "time": "2026-04-22T16:00:59+00:00"
         },
         {
             "name": "makaravich/wptoptions",
@@ -83,5 +83,5 @@
         "ext-gd": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
