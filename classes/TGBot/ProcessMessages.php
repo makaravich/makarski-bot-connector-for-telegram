@@ -224,6 +224,10 @@ class ProcessMessages {
             return self::prepare_media_message($message, $document_type, $original_message);
         }
 
+        if ($original_message->callback_query->data) {
+            return self::prepare_callback_query_message($original_message);
+        }
+
         return self::prepare_text_message($message);
     }
 
@@ -290,6 +294,19 @@ class ProcessMessages {
             'files' => [],
             'has_media_group' => false,
             'type' => 'text',
+        ];
+    }
+
+    private static function prepare_callback_query_message($message): object {
+        $type = 'callback_query';
+        $text = $message->callback_query->data ?? '';
+
+        return (object)[
+            'text' => $text,
+            'files' => [],
+            'has_media_group' => false,
+            'type' => $type,
+            'callback_query' => $message->callback_query,
         ];
     }
 
