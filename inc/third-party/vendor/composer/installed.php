@@ -3,7 +3,7 @@
         'name' => 'makaravich/tg-bot',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '2eafa98f333c5ba7ead0c83f54ffa6b159a27419',
+        'reference' => '96d17772f41a8790fe2f324124d22fb1dc05db26',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'makaravich/simple-tg-bot' => array(
-            'pretty_version' => 'v0.1.23',
-            'version' => '0.1.23.0',
-            'reference' => 'dcd73a0ee076cdadee1abfad1f4cf84980d2f582',
+            'pretty_version' => 'v0.1.26',
+            'version' => '0.1.26.0',
+            'reference' => '8dcd002e9743d8b81f073770f6c0bb54d4526e6c',
             'type' => 'library',
             'install_path' => __DIR__ . '/../makaravich/simple-tg-bot',
             'aliases' => array(),
@@ -22,7 +22,7 @@
         'makaravich/tg-bot' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '2eafa98f333c5ba7ead0c83f54ffa6b159a27419',
+            'reference' => '96d17772f41a8790fe2f324124d22fb1dc05db26',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
