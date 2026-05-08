@@ -127,6 +127,12 @@ class Init {
                 do_action('tgbot_pre_checkout_query', $bot, $request_respond->pre_checkout_query, $user_id);
             }
 
+            if (!empty($request_respond->message->successful_payment)) {
+                $chat_id = $request_respond->message->chat->id ?? 0;
+                $user_id = (int) ProcessMessages::get_user_by_chat_id($chat_id);
+                do_action('tgbot_successful_payment', $bot, $request_respond->message->successful_payment, $user_id);
+            }
+
             exit; // Terminate execution to avoid loading theme
         }
     }
