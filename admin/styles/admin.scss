@@ -1,7 +1,37 @@
 .wpt-form {
   input {
-    &[type=text], &[type=url], [type=phone], [type=email] {
+    &[type=text], &[type=password], &[type=url], [type=phone], [type=email] {
       width: 100%;
+    }
+  }
+}
+
+.tgbot-token-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .tgbot-token-input {
+    flex: 1;
+  }
+
+  .tgbot-token-toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 34px;
+    padding: 0;
+    min-height: auto;
+
+    .dashicons {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      display: flex;
+      align-items: center;
     }
   }
 }

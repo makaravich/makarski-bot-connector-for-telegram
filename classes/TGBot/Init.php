@@ -58,13 +58,15 @@ class Init {
      * @return void
      */
     public function add_admin_assets($hook): void {
-        wp_enqueue_style('linksh-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/styles/admin.css', [], filemtime(TGBOT_PLUGIN_BASEPATH . '/admin/styles/admin.css'));
+        wp_enqueue_style( 'tgbot-admin-style', TGBOT_PLUGIN_BASEURI . '/admin/styles/admin.min.css', [], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/styles/admin.min.css' ) );
 
-        if ('edit.php' == $hook) {
-            wp_enqueue_script('linksh-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [
-                    'jquery',
-                    'wp-util'
-            ], filemtime(TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js'), true);
+        $js_hooks = [ 'edit.php', 'settings_page_tgbot_options-options' ];
+        if ( in_array( $hook, $js_hooks, true ) ) {
+            wp_enqueue_script( 'tgbot-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [ 'jquery' ], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js' ), true );
+            wp_localize_script( 'tgbot-admin-script', 'tgbotAdmin', [
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'tgbot_admin' ),
+            ] );
         }
     }
 

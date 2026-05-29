@@ -49,7 +49,7 @@ function tgbot_register_settings(): void {
 	add_settings_field(
 		'gen_tg_token',
 		__( 'Telegram Token', 'tgbot' ),
-		'tgbot_field_text',
+		'tgbot_field_token',
 		'tgbot_options_page',
 		'tgbot_section_telegram',
 		[ 'key' => 'gen_tg_token' ]
@@ -96,6 +96,26 @@ function tgbot_field_text( array $args ): void {
 		esc_attr( $args['key'] ),
 		esc_attr( $val ?? '' )
 	);
+}
+
+function tgbot_field_token( array $args ): void {
+	$val = tgbot_get_option( $args['key'] );
+	$id  = 'tgbot_token_field';
+	?>
+	<div class="tgbot-token-wrap">
+		<input
+			id="<?php echo esc_attr( $id ); ?>"
+			class="tgbot_options tgbot-token-input"
+			type="password"
+			name="tgbot_options[<?php echo esc_attr( $args['key'] ); ?>]"
+			value="<?php echo esc_attr( $val ?? '' ); ?>"
+			autocomplete="new-password"
+		/>
+		<button type="button" class="button tgbot-token-toggle" data-target="<?php echo esc_attr( $id ); ?>" aria-label="<?php esc_attr_e( 'Show/hide token', 'tgbot' ); ?>">
+			<span class="dashicons dashicons-visibility"></span>
+		</button>
+	</div>
+	<?php
 }
 
 function tgbot_field_checkbox( array $args ): void {

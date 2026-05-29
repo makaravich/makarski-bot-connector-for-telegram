@@ -4,4 +4,5 @@
 watcher/
 admin/styles/admin.scss
 admin/styles/admin.css.map
+admin/styles/admin.min.css.map
 *.pot~
