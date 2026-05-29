@@ -21,7 +21,8 @@ class Polling {
 
 		$schedules[ self::CRON_SCHEDULE ] = [
 			'interval' => max( 5, $interval ),
-			'display'  => sprintf( __( 'Every %d seconds', 'tgbot' ), $interval ),
+			/* translators: %d is the polling interval in seconds */
+			'display'  => sprintf( __( 'Every %d seconds', 'tg-bot' ), $interval ),
 		];
 
 		return $schedules;
@@ -75,20 +76,15 @@ class Polling {
 		$offset = (int) get_option( self::OFFSET_OPTION, 0 );
 		$bot    = new BotApi( $token, false );
 
-		$url = "https://api.telegram.org/bot{$token}/getUpdates?timeout=0&limit=100"
-			. ( $offset > 0 ? "&offset={$offset}" : '' );
+		$url  = "https://api.telegram.org/bot{$token}/getUpdates?timeout=0&limit=100"
+			. ( $offset > 0 ? '&offset=' . $offset : '' );
+		$resp = wp_remote_get( $url, array( 'timeout' => 10 ) );
 
-		$ch = curl_init( $url );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_TIMEOUT, 10 );
-		$response = curl_exec( $ch );
-		curl_close( $ch );
-
-		if ( ! $response ) {
+		if ( is_wp_error( $resp ) || 200 !== wp_remote_retrieve_response_code( $resp ) ) {
 			return;
 		}
 
-		$data = json_decode( $response );
+		$data = json_decode( wp_remote_retrieve_body( $resp ) );
 
 		if ( empty( $data->ok ) || empty( $data->result ) ) {
 			return;

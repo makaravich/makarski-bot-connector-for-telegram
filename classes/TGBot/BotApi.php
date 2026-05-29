@@ -85,7 +85,7 @@ class BotApi {
 		$command = ltrim( $command, '/' );
 
 		if ( strlen( $command ) > 100 ) {
-			$this->send_message( __( 'Too long command', 'tgbot' ) );
+			$this->send_message( __( 'Too long command', 'tg-bot' ) );
 		} else {
 			if ( method_exists( $this, 'command_' . $command ) ) {
 				call_user_func( array( $this, 'command_' . $command ) );
@@ -500,7 +500,7 @@ class BotApi {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( '[TGBot ERROR] ' . $response->get_error_message() );
+			error_log( '[TGBot ERROR] ' . $response->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			$this->last_request_response = (object) array(
 				'ok'          => false,
 				'description' => $response->get_error_message(),
@@ -511,7 +511,7 @@ class BotApi {
 		$this->last_request_response = json_decode( wp_remote_retrieve_body( $response ) );
 
 		if ( ! $this->last_request_response->ok ) {
-			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) );
+			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		return $this->last_request_response;
@@ -520,12 +520,14 @@ class BotApi {
 	/**
 	 * Send a multipart/form-data request via curl.
 	 * Used only for file uploads (send_photo, send_document) where CURLFile is required.
+	 * wp_remote_post() does not support CURLFile/multipart uploads natively.
 	 *
 	 * @param string $url  Full API endpoint URL.
 	 * @param array  $data Request parameters including CURLFile objects.
 	 * @return mixed Decoded response object.
 	 */
 	private function send_multipart_request( string $url, array $data ): mixed {
+		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_close
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_POST, true );
@@ -534,11 +536,12 @@ class BotApi {
 
 		$response = curl_exec( $ch );
 		curl_close( $ch );
+		// phpcs:enable
 
 		$this->last_request_response = json_decode( $response );
 
 		if ( ! $this->last_request_response->ok ) {
-			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) );
+			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		return $this->last_request_response;

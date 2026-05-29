@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Register plugin settings and add the options page.
  *
@@ -24,8 +28,8 @@ add_action('wp_ajax_tgbot_webhook_action', 'tgbot_ajax_webhook_action');
 function tgbot_add_options_page(): void {
     add_submenu_page(
             'options-general.php',
-            __('Telegram Integration Options', 'tgbot'),
-            __('Telegram settings', 'tgbot'),
+            __('Telegram Integration Options', 'tg-bot'),
+            __('Telegram settings', 'tg-bot'),
             'manage_options',
             'tgbot_options-options',
             'tgbot_options_page_output'
@@ -42,14 +46,14 @@ function tgbot_register_settings(): void {
     // Section: Telegram
     add_settings_section(
             'tgbot_section_telegram',
-            __('Telegram options', 'tgbot'),
+            __('Telegram options', 'tg-bot'),
             '__return_false',
             'tgbot_options_page'
     );
 
     add_settings_field(
             'gen_tg_token',
-            __('Telegram Token', 'tgbot'),
+            __('Telegram Token', 'tg-bot'),
             'tgbot_field_token',
             'tgbot_options_page',
             'tgbot_section_telegram',
@@ -58,7 +62,7 @@ function tgbot_register_settings(): void {
 
     add_settings_field(
             'gen_tg_endpoint',
-            __('Telegram endpoint', 'tgbot'),
+            __('Telegram endpoint', 'tg-bot'),
             function ($args) {
                 echo '<span id="tgbot-endpoint-marker"></span>';
                 tgbot_field_text($args);
@@ -71,14 +75,14 @@ function tgbot_register_settings(): void {
     // Section: Connection mode
     add_settings_section(
             'tgbot_section_mode',
-            __('Connection mode', 'tgbot'),
+            __('Connection mode', 'tg-bot'),
             '__return_false',
             'tgbot_options_page'
     );
 
     add_settings_field(
             'gen_tg_mode',
-            __('Mode', 'tgbot'),
+            __('Mode', 'tg-bot'),
             'tgbot_field_mode',
             'tgbot_options_page',
             'tgbot_section_mode'
@@ -86,7 +90,7 @@ function tgbot_register_settings(): void {
 
     add_settings_field(
             'gen_tg_polling_interval',
-            __('Polling interval (sec)', 'tgbot'),
+            __('Polling interval (sec)', 'tg-bot'),
             'tgbot_field_polling_interval',
             'tgbot_options_page',
             'tgbot_section_mode'
@@ -95,7 +99,7 @@ function tgbot_register_settings(): void {
     // Section: Webhook — marker span between h2 and table, used by JS toggle
     add_settings_section(
             'tgbot_section_webhook',
-            __('Webhook', 'tgbot'),
+            __('Webhook', 'tg-bot'),
             function () {
                 echo '<span id="tgbot-webhook-section-marker"></span>';
             },
@@ -104,7 +108,7 @@ function tgbot_register_settings(): void {
 
     add_settings_field(
             'tgbot_webhook_panel',
-            __('Webhook status', 'tgbot'),
+            __('Webhook status', 'tg-bot'),
             'tgbot_field_webhook_panel',
             'tgbot_options_page',
             'tgbot_section_webhook'
@@ -119,7 +123,7 @@ function tgbot_options_page_output(): void {
             <?php
             settings_fields('tgbot_options_group');
             do_settings_sections('tgbot_options_page');
-            submit_button(__('Save', 'tgbot'));
+            submit_button(__('Save', 'tg-bot'));
             ?>
         </form>
     </div>
@@ -149,7 +153,7 @@ function tgbot_field_token(array $args): void {
                 autocomplete="new-password"
         />
         <button type="button" class="button tgbot-token-toggle" data-target="<?php echo esc_attr($id); ?>"
-                aria-label="<?php esc_attr_e('Show/hide token', 'tgbot'); ?>">
+                aria-label="<?php esc_attr_e('Show/hide token', 'tg-bot'); ?>">
             <span class="dashicons dashicons-visibility"></span>
         </button>
     </div>
@@ -164,13 +168,13 @@ function tgbot_field_webhook_panel(): void {
         </div>
         <div class="tgbot-webhook-actions">
             <button type="button" class="button button-primary" id="tgbot-set-webhook">
-                <?php esc_html_e('Set Webhook', 'tgbot'); ?>
+                <?php esc_html_e('Set Webhook', 'tg-bot'); ?>
             </button>
             <button type="button" class="button" id="tgbot-check-webhook">
-                <?php esc_html_e('Check Status', 'tgbot'); ?>
+                <?php esc_html_e('Check Status', 'tg-bot'); ?>
             </button>
             <button type="button" class="button tgbot-delete-webhook" id="tgbot-delete-webhook">
-                <?php esc_html_e('Delete Webhook', 'tgbot'); ?>
+                <?php esc_html_e('Delete Webhook', 'tg-bot'); ?>
             </button>
         </div>
     </div>
@@ -183,15 +187,15 @@ function tgbot_field_mode(): void {
     <fieldset>
         <label>
             <input type="radio" name="tgbot_options[gen_tg_mode]" value="webhook" <?php checked($val, 'webhook'); ?> />
-            <?php esc_html_e('Webhook', 'tgbot'); ?>
+            <?php esc_html_e('Webhook', 'tg-bot'); ?>
         </label>
         &nbsp;&nbsp;
         <label>
             <input type="radio" name="tgbot_options[gen_tg_mode]" value="polling" <?php checked($val, 'polling'); ?> />
-            <?php esc_html_e('Polling (getUpdates)', 'tgbot'); ?>
+            <?php esc_html_e('Polling (getUpdates)', 'tg-bot'); ?>
         </label>
     </fieldset>
-    <p class="description"><?php esc_html_e('Webhook requires a public HTTPS URL. Polling can work on localhost.', 'tgbot'); ?></p>
+    <p class="description"><?php esc_html_e('Webhook requires a public HTTPS URL. Polling can work on localhost.', 'tg-bot'); ?></p>
     <?php
 }
 
@@ -200,10 +204,10 @@ function tgbot_field_polling_interval(): void {
     echo '<span id="tgbot-polling-interval-marker"></span>';
     printf(
             '<input class="small-text" type="number" min="5" max="3600" name="tgbot_options[gen_tg_polling_interval]" value="%d" /> %s',
-            $val,
-            esc_html__('sec', 'tgbot')
+            (int) $val,
+            esc_html__( 'sec', 'tg-bot' )
     );
-    echo '<p class="description">' . esc_html__('Minimum: 5 sec. Requires WP-Cron or system cron.', 'tgbot') . '</p>';
+    echo '<p class="description">' . esc_html__('Minimum: 5 sec. Requires WP-Cron or system cron.', 'tg-bot') . '</p>';
 }
 
 function tgbot_field_checkbox(array $args): void {
@@ -259,14 +263,14 @@ function tgbot_ajax_webhook_action(): void {
     check_ajax_referer('tgbot_admin', 'nonce');
 
     if (!current_user_can('manage_options')) {
-        wp_send_json_error(['message' => __('Forbidden', 'tgbot')], 403);
+        wp_send_json_error(['message' => __('Forbidden', 'tg-bot')], 403);
     }
 
-    $action = sanitize_text_field($_POST['webhook_action'] ?? '');
+    $action = sanitize_text_field( wp_unslash( $_POST['webhook_action'] ?? '' ) );
     $token = tgbot_get_option('gen_tg_token');
 
     if (!$token) {
-        wp_send_json_error(['message' => __('Telegram token is not configured.', 'tgbot')]);
+        wp_send_json_error(['message' => __('Telegram token is not configured.', 'tg-bot')]);
     }
 
     $bot = new \TGBot\BotApi( $token, false );
@@ -279,7 +283,7 @@ function tgbot_ajax_webhook_action(): void {
         case 'set':
             $endpoint = tgbot_get_option('gen_tg_endpoint');
             if (!$endpoint) {
-                wp_send_json_error(['message' => __('Telegram endpoint is not configured.', 'tgbot')]);
+                wp_send_json_error(['message' => __('Telegram endpoint is not configured.', 'tg-bot')]);
             }
             $result = $bot->set_webhook(get_home_url(null, $endpoint));
             break;
@@ -293,12 +297,12 @@ function tgbot_ajax_webhook_action(): void {
     }
 
     if (empty($result) || !isset($result->ok)) {
-        wp_send_json_error(['message' => __('No response from Telegram API.', 'tgbot')]);
+        wp_send_json_error(['message' => __('No response from Telegram API.', 'tg-bot')]);
     }
 
     if ($result->ok) {
         wp_send_json_success((array)($result->result ?? []));
     } else {
-        wp_send_json_error(['message' => $result->description ?? __('Telegram API error.', 'tgbot')]);
+        wp_send_json_error(['message' => $result->description ?? __('Telegram API error.', 'tg-bot')]);
     }
 }

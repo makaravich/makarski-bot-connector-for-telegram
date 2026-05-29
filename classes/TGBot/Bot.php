@@ -8,7 +8,7 @@ class Bot extends BotApi {
 		$command = ltrim( $command, '/' );
 
 		if ( strlen( $command ) > 100 ) {
-			$this->send_message( __( 'Too long command', 'tgbot' ) );
+			$this->send_message( __( 'Too long command', 'tg-bot' ) );
 
 			return;
 		}
@@ -23,7 +23,7 @@ class Bot extends BotApi {
 			if ( is_callable( array( $commander, $command ) ) ) {
 				$commander->$command( $this );
 			} else {
-				$this->send_message( __( 'Unknown command: ', 'tgbot' ) . $command );
+				$this->send_message( __( 'Unknown command: ', 'tg-bot' ) . $command );
 			}
 		}
 	}

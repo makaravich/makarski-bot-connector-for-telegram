@@ -2,8 +2,12 @@
 
 namespace TGBot;
 
-global $tg_bot_commands;
-$tg_bot_commands = [];
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+global $tgbot_commands; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+$tgbot_commands = [];
 
 if (!function_exists('register_bot_command')) {
     /**
@@ -14,12 +18,12 @@ if (!function_exists('register_bot_command')) {
      * @return void
      */
     function register_bot_command(string $command, callable $callback): void {
-        global $tg_bot_commands;
+        global $tgbot_commands;
 
         $callback = apply_filters('tgbot_register_bot_command', $callback, $command);
 
         if ($callback) {
-            $tg_bot_commands[$command] = $callback;
+            $tgbot_commands[$command] = $callback;
         }
     }
 }
@@ -31,10 +35,10 @@ if (!function_exists('get_registered_bot_commands')) {
      * @return array
      */
     function get_registered_bot_commands(): array {
-        global $tg_bot_commands;
+        global $tgbot_commands;
 
-        if (!empty($tg_bot_commands) && is_array($tg_bot_commands)) {
-            return $tg_bot_commands;
+        if (!empty($tgbot_commands) && is_array($tgbot_commands)) {
+            return $tgbot_commands;
         } else {
             return [];
         }

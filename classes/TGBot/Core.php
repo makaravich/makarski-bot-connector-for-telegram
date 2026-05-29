@@ -40,7 +40,7 @@ class Core {
 
 		if ( $posts_obj->has_previous ) {
 			$prev_button   = [
-				'text'          => '◀️ ' . __( 'Back', 'tgbot' ),
+				'text'          => '◀️ ' . __( 'Back', 'tg-bot' ),
 				'callback_data' => json_encode( [
 					'command'    => 'links',
 					'page'       => $page - 1,
@@ -52,7 +52,7 @@ class Core {
 
 		if ( $posts_obj->has_next ) {
 			$next_button   = [
-				'text'          => __( 'Next', 'tgbot' ) . ' ▶️',
+				'text'          => __( 'Next', 'tg-bot' ) . ' ▶️',
 				'callback_data' => json_encode( [
 					'command'    => 'links',
 					'page'       => $page + 1,
@@ -70,16 +70,11 @@ class Core {
 		wp_set_current_user( $user_id );
 		//wp_set_auth_cookie( $user_id );
 
-		// Set user language as current
-		$current_lang = get_user_meta( $user_id, 'locale', true ) ?? 'en_US';
-
-		// Set current language
+		// Switch to user's locale and reload translations
+		$current_lang = get_user_meta( $user_id, 'locale', true ) ?: 'en_US';
 		switch_to_locale( $current_lang );
-
-		// Reload translations for the user's locale
-		add_action( 'init', function () {
-			load_plugin_textdomain( 'tgbot', false, dirname( plugin_basename( TGBOT_PLUGIN_MAIN_FILE ) ) . '/languages/' );
-		} );
+		unload_textdomain( 'tg-bot' );
+		load_plugin_textdomain( 'tg-bot', false, dirname( plugin_basename( TGBOT_PLUGIN_MAIN_FILE ) ) . '/languages/' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound
 	}
 
 
@@ -102,7 +97,7 @@ class Core {
 			$bot = new BotApi( $token, false );
 			$bot->set_webhook( $full_endpoint );
 		} else {
-			error_log( '{error} There is no endpoint value when registration new TG Endpoint' );
+			error_log( '{error} There is no endpoint value when registration new TG Endpoint' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 	}
 }

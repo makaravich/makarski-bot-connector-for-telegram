@@ -8,6 +8,6 @@ class BotCommands {
 		$bot_map   = $bot->get_map();
 		$user_data = $bot_map->request_respond->message->from ?? null;
 
-		$bot->send_message( __( 'Start command', 'tgbot' ) );
+		$bot->send_message( __( 'Start command', 'tg-bot' ) );
 	}
 }

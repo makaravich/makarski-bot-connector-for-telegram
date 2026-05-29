@@ -30,7 +30,7 @@ class ProcessMessages {
         $user_data = self::get_user_from_chat_id($chat_id);
 
         if (is_array($user_data) && !$user_data['success']) {
-            $bot->send_message($user_data['error'] ?? __('Error', 'tgbot'));
+            $bot->send_message($user_data['error'] ?? __('Error', 'tg-bot'));
 
             return;
         } elseif (is_int($user_data) && $user_data != 0) {
@@ -67,7 +67,7 @@ class ProcessMessages {
 
             if (str_starts_with($command, '/')) {
                 // Do command
-                do_action('handle_custom_bot_commands', $bot, $user_id, $command);
+                do_action( 'tgbot_handle_custom_bot_commands', $bot, $user_id, $command );
 
                 $bot->run_command($command);
             } else {
@@ -81,7 +81,7 @@ class ProcessMessages {
                                 }*/
             }
         } else {
-            $bot->send_message(__('Error', 'tgbot'));
+            $bot->send_message(__('Error', 'tg-bot'));
         }
 
     }
@@ -119,7 +119,7 @@ class ProcessMessages {
         if (!$tg_id) {
             return [
                 'success' => false,
-                'error' => __('The Chat ID is empty.', 'tgbot')
+                'error' => __('The Chat ID is empty.', 'tg-bot')
             ];
         }
 
@@ -160,7 +160,7 @@ class ProcessMessages {
         } else {
             return [
                 'success' => false,
-                'error' => __('User already exists.', 'tgbot')
+                'error' => __('User already exists.', 'tg-bot')
             ];
         }
     }
@@ -326,7 +326,7 @@ class ProcessMessages {
         }
 
         // Get filename from URL
-        $file_name = basename(parse_url($remote_url, PHP_URL_PATH));
+        $file_name = basename( wp_parse_url( $remote_url, PHP_URL_PATH ) );
 
         // Generate filename if empty
         if (empty($file_name) || strpos($file_name, '.') === false) {
@@ -377,7 +377,7 @@ class ProcessMessages {
         // Determine MIME type
         $wp_filetype = wp_check_filetype_and_ext($temp_file, $file_name);
         if (!$wp_filetype['ext'] || !$wp_filetype['type']) {
-            unlink($temp_file);
+            wp_delete_file( $temp_file );
 
             return new WP_Error('invalid_file_type', 'Unsupported file type');
         }
@@ -389,7 +389,7 @@ class ProcessMessages {
 
         // Remove temporary file
         if (file_exists($temp_file)) {
-            unlink($temp_file);
+            wp_delete_file( $temp_file );
         }
 
         // Check if upload was successful
@@ -422,7 +422,7 @@ class ProcessMessages {
         $result = self::download_remote_file_to_media_library($remote_url, $post_id);
 
         if (is_wp_error($result)) {
-            error_log('File downloading error: ' . $result->get_error_message());
+            error_log( 'File downloading error: ' . $result->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 
             return false;
         }

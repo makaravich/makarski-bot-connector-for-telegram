@@ -13,7 +13,7 @@
  * Requires PHP:      8.0
  * License:           GPLv2
  * Author:            Dzmitry Makarski
- * Text Domain:       tgbot
+ * Text Domain:       tg-bot
  * Domain Path:       /languages
  */
 

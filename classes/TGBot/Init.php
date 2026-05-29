@@ -11,10 +11,6 @@ class Init {
                 'help_message' => self::get_help_message(),
         ];
 
-        add_action( 'plugins_loaded', function () {
-            load_plugin_textdomain( 'tgbot', false, dirname( plugin_basename( TGBOT_PLUGIN_MAIN_FILE ) ) . '/languages/' );
-        } );
-
         // Add styles and scripts on admin side
         add_action('admin_enqueue_scripts', [$this, 'add_admin_assets']);
 
@@ -46,7 +42,7 @@ class Init {
      * @return string
      */
     public static function get_help_message(): string {
-        $default_message = __('This is an awesome Telegram bot! 😉', 'tgbot');
+        $default_message = __('This is an awesome Telegram bot! 😉', 'tg-bot');
 
         return apply_filters('tgbot_help_message', $default_message);
     }
@@ -151,10 +147,14 @@ class Init {
      * @return false|void
      */
     function save_tg_nickname_field($user_id) {
-        if (!current_user_can('edit_user', $user_id)) {
+        if ( ! current_user_can( 'edit_user', $user_id ) ) {
             return false;
         }
-        update_user_meta($user_id, 'tg_nickname', sanitize_text_field($_POST['tg_nickname']));
+        if ( ! isset( $_POST['tgbot_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['tgbot_nonce'] ) ), 'tgbot_save_user_fields' ) ) {
+            return false;
+        }
+        $nickname = isset( $_POST['tg_nickname'] ) ? sanitize_text_field( wp_unslash( $_POST['tg_nickname'] ) ) : '';
+        update_user_meta( $user_id, 'tg_nickname', $nickname );
     }
 
     /**
@@ -174,7 +174,8 @@ class Init {
                     <input type="text" name="tg_nickname" id="tg_nickname"
                            value="<?php echo esc_attr(get_the_author_meta('tg_nickname', $user->ID)); ?>"
                            class="regular-text"/>
-                    <p class="description"><?php _e('Enter your nick in Telegram (without @)', 'tgbot') ?></p>
+                    <?php wp_nonce_field( 'tgbot_save_user_fields', 'tgbot_nonce' ); ?>
+                    <p class="description"><?php esc_html_e( 'Enter your nick in Telegram (without @)', 'tg-bot' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -189,7 +190,7 @@ class Init {
      * @return mixed
      */
     function add_tg_nickname_column($columns): mixed {
-        $columns['tg_nickname'] = __('Telegram Nickname', 'tgbot');
+        $columns['tg_nickname'] = __('Telegram Nickname', 'tg-bot');
 
         return $columns;
     }
