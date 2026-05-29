@@ -56,5 +56,10 @@ require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_options.php';
 // Plugin Functions
 require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_functions.php';
 
+// Deactivation: stop polling cron
+register_deactivation_hook( __FILE__, function () {
+	\TGBot\Polling::unschedule();
+} );
+
 // Run the bot
 new \TGBot\Init();

@@ -26,6 +26,7 @@ class Init {
         // Run required functions
         add_action('init', function () {
             \TGBot\ProcessMessages::init();
+            \TGBot\Polling::init();
         }, 999);
 
         // User custom fields

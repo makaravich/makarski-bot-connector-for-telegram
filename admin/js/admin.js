@@ -1,5 +1,34 @@
 jQuery(function ($) {
 
+    // --- Connection mode toggle ---
+    function applyMode(mode) {
+        var isPolling = (mode === 'polling');
+
+        // Endpoint row: visible in webhook mode only
+        $('#tgbot-endpoint-marker').closest('tr').toggle(!isPolling);
+
+        // Polling interval row: visible in polling mode only
+        $('#tgbot-polling-interval-marker').closest('tr').toggle(isPolling);
+
+        // Webhook section: h2 + marker + following table
+        var $m = $('#tgbot-webhook-section-marker');
+        $m.prev('h2').toggle(!isPolling);
+        $m.next('table.form-table').toggle(!isPolling);
+        $m.toggle(!isPolling);
+    }
+
+    var $modeRadios = $('input[name="tgbot_options[gen_tg_mode]"]');
+
+    if ($modeRadios.length) {
+        // Apply on page load
+        applyMode($modeRadios.filter(':checked').val() || 'webhook');
+
+        // Apply on change
+        $modeRadios.on('change', function () {
+            applyMode($(this).val());
+        });
+    }
+
     // --- Token show/hide toggle ---
     $(document).on('click', '.tgbot-token-toggle', function () {
         var $btn   = $(this);

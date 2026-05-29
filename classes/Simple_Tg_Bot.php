@@ -58,7 +58,7 @@ class Simple_Tg_Bot {
 
         $this->set_map($bot_map);
 
-        if ($this->map['auto_exec'] === false) {
+        if (($this->map['auto_exec'] ?? true) === false) {
             $this->auto_exec = false;
         }
 
