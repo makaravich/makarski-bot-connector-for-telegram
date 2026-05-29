@@ -507,6 +507,19 @@ class Simple_Tg_Bot {
     }
 
     /**
+     * Returns current webhook info
+     * Fields: url, has_custom_certificate, pending_update_count,
+     *         last_error_date, last_error_message, max_connections, etc.
+     *
+     * @return mixed
+     */
+    public function get_webhook_info(): mixed {
+        $url = $this->api_url . "getWebhookInfo";
+
+        return $this->send_request($url);
+    }
+
+    /**
      * Getting updates
      *
      * @return mixed
@@ -595,8 +608,7 @@ class Simple_Tg_Bot {
         $this->last_request_response = json_decode($response);
 
         if (!$this->last_request_response->ok) {
-            error_log('[ERROR WITH THE REQUEST]. Dump: ' . print_r($this->last_request_response, true));
-            $this->send_message('There was an error with the request. Please try again later.');
+            error_log('[TGBot ERROR] ' . ($this->last_request_response->description ?? 'Unknown error'));
         }
 
         return $this->last_request_response;

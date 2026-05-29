@@ -4,9 +4,8 @@
  * Register plugin settings and add the options page.
  *
  * Options are stored as a single array under option_name 'tgbot_options':
- *   gen_tg_token       — Telegram bot token
- *   gen_tg_endpoint    — webhook URL path (relative)
- *   gen_tg_set_webhook — auto-set webhook on save (checkbox)
+ *   gen_tg_token    — Telegram bot token
+ *   gen_tg_endpoint — webhook URL path (relative)
  */
 
 if ( ! function_exists( 'tgbot_get_option' ) ) {
@@ -20,6 +19,7 @@ if ( ! function_exists( 'tgbot_get_option' ) ) {
 add_action( 'admin_menu', 'tgbot_add_options_page' );
 add_action( 'admin_init', 'tgbot_register_settings' );
 add_action( 'update_option_tgbot_options', 'tgbot_options_save', 10, 2 );
+add_action( 'wp_ajax_tgbot_webhook_action', 'tgbot_ajax_webhook_action' );
 
 function tgbot_add_options_page(): void {
 	add_submenu_page(
@@ -39,6 +39,7 @@ function tgbot_register_settings(): void {
 		[ 'sanitize_callback' => 'tgbot_sanitize_options' ]
 	);
 
+	// Section: Telegram
 	add_settings_section(
 		'tgbot_section_telegram',
 		__( 'Telegram options', 'tgbot' ),
@@ -64,13 +65,20 @@ function tgbot_register_settings(): void {
 		[ 'key' => 'gen_tg_endpoint' ]
 	);
 
+	// Section: Webhook
+	add_settings_section(
+		'tgbot_section_webhook',
+		__( 'Webhook', 'tgbot' ),
+		'__return_false',
+		'tgbot_options_page'
+	);
+
 	add_settings_field(
-		'gen_tg_set_webhook',
-		__( 'Automatically set the webhook when save', 'tgbot' ),
-		'tgbot_field_checkbox',
+		'tgbot_webhook_panel',
+		__( 'Webhook status', 'tgbot' ),
+		'tgbot_field_webhook_panel',
 		'tgbot_options_page',
-		'tgbot_section_telegram',
-		[ 'key' => 'gen_tg_set_webhook' ]
+		'tgbot_section_webhook'
 	);
 }
 
@@ -118,6 +126,27 @@ function tgbot_field_token( array $args ): void {
 	<?php
 }
 
+function tgbot_field_webhook_panel(): void {
+	?>
+	<div class="tgbot-webhook-panel">
+		<div class="tgbot-webhook-status" id="tgbot-webhook-status">
+			<span class="tgbot-webhook-spinner spinner is-active"></span>
+		</div>
+		<div class="tgbot-webhook-actions">
+			<button type="button" class="button button-primary" id="tgbot-set-webhook">
+				<?php esc_html_e( 'Set Webhook', 'tgbot' ); ?>
+			</button>
+			<button type="button" class="button" id="tgbot-check-webhook">
+				<?php esc_html_e( 'Check Status', 'tgbot' ); ?>
+			</button>
+			<button type="button" class="button tgbot-delete-webhook" id="tgbot-delete-webhook">
+				<?php esc_html_e( 'Delete Webhook', 'tgbot' ); ?>
+			</button>
+		</div>
+	</div>
+	<?php
+}
+
 function tgbot_field_checkbox( array $args ): void {
 	$val = tgbot_get_option( $args['key'] );
 	printf(
@@ -138,27 +167,66 @@ function tgbot_sanitize_options( $input ): array {
 		$clean['gen_tg_endpoint'] = sanitize_text_field( $input['gen_tg_endpoint'] );
 	}
 
-	$clean['gen_tg_set_webhook'] = isset( $input['gen_tg_set_webhook'] ) ? 'on' : '';
-
 	return $clean;
 }
 
 function tgbot_options_save( $old_value, $new_value ): void {
-	$token        = $new_value['gen_tg_token'] ?? false;
 	$endpoint     = $new_value['gen_tg_endpoint'] ?? false;
 	$old_endpoint = $old_value['gen_tg_endpoint'] ?? false;
-	$set_webhook  = $new_value['gen_tg_set_webhook'] ?? false;
 
 	if ( ! empty( $endpoint ) && $old_endpoint !== $endpoint ) {
 		\TGBot\Init::custom_rewrite_rule();
 		flush_rewrite_rules();
 	}
+}
 
-	if ( $token && $endpoint ) {
-		$full_endpoint = get_home_url( null, $endpoint );
+/**
+ * AJAX handler for webhook actions: check / set / delete
+ */
+function tgbot_ajax_webhook_action(): void {
+	check_ajax_referer( 'tgbot_admin', 'nonce' );
 
-		if ( $set_webhook ) {
-			\TGBot\Core::set_tg_webhook( $endpoint, $token );
-		}
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Forbidden', 'tgbot' ) ], 403 );
+	}
+
+	$action = sanitize_text_field( $_POST['webhook_action'] ?? '' );
+	$token  = tgbot_get_option( 'gen_tg_token' );
+
+	if ( ! $token ) {
+		wp_send_json_error( [ 'message' => __( 'Telegram token is not configured.', 'tgbot' ) ] );
+	}
+
+	$bot = new Simple_Tg_Bot( $token, false );
+
+	switch ( $action ) {
+		case 'check':
+			$result = $bot->get_webhook_info();
+			break;
+
+		case 'set':
+			$endpoint = tgbot_get_option( 'gen_tg_endpoint' );
+			if ( ! $endpoint ) {
+				wp_send_json_error( [ 'message' => __( 'Telegram endpoint is not configured.', 'tgbot' ) ] );
+			}
+			$result = $bot->set_webhook( get_home_url( null, $endpoint ) );
+			break;
+
+		case 'delete':
+			$result = $bot->delete_webhook();
+			break;
+
+		default:
+			wp_send_json_error( [ 'message' => 'Unknown action.' ] );
+	}
+
+	if ( empty( $result ) || ! isset( $result->ok ) ) {
+		wp_send_json_error( [ 'message' => __( 'No response from Telegram API.', 'tgbot' ) ] );
+	}
+
+	if ( $result->ok ) {
+		wp_send_json_success( (array) ( $result->result ?? [] ) );
+	} else {
+		wp_send_json_error( [ 'message' => $result->description ?? __( 'Telegram API error.', 'tgbot' ) ] );
 	}
 }

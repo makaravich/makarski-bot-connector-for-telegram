@@ -64,8 +64,10 @@ class Init {
         if ( in_array( $hook, $js_hooks, true ) ) {
             wp_enqueue_script( 'tgbot-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [ 'jquery' ], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js' ), true );
             wp_localize_script( 'tgbot-admin-script', 'tgbotAdmin', [
-                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-                'nonce'   => wp_create_nonce( 'tgbot_admin' ),
+                'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'tgbot_admin' ),
+                'siteUrl'  => get_home_url(),
+                'endpoint' => tgbot_get_option( 'gen_tg_endpoint' ) ?? '',
             ] );
         }
     }

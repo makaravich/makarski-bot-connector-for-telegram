@@ -35,3 +35,60 @@
     }
   }
 }
+
+// Webhook panel
+.tgbot-webhook-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tgbot-webhook-spinner {
+  float: none;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.tgbot-webhook-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .tgbot-delete-webhook {
+    color: #b32d2e;
+    border-color: #b32d2e;
+
+    &:hover {
+      background: #b32d2e;
+      color: #fff;
+    }
+  }
+}
+
+.tgbot-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 4px 0;
+
+  .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  &--ok       { color: #3c763d; .dashicons { color: #46b450; } }
+  &--error    { color: #a00;    .dashicons { color: #dc3232; } }
+  &--mismatch { color: #7a4800; .dashicons { color: #f0b849; } }
+  &--inactive { color: #777;    .dashicons { color: #aaa; } }
+}
+
+.tgbot-pending {
+  background: #e5f5fa;
+  color: #0073aa;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
