@@ -18,8 +18,6 @@
  */
 
 // Exit if accessed directly.
-use TGBot\BitbucketPluginUpdater;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -52,9 +50,6 @@ function tgbot_autoload_classes( $class_name ): void {
 // Register Autoload
 spl_autoload_register( 'tgbot_autoload_classes' );
 
-// Require Third party
-require_once TGBOT_PLUGIN_BASEPATH . '/inc/third-party/vendor/autoload.php';
-
 // Plugin Options
 require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_options.php';
 
@@ -63,18 +58,3 @@ require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_functions.php';
 
 // Run the bot
 new \TGBot\Init();
-
-//Plugin Updater
-add_action( 'plugins_loaded', function () {
-	if ( is_admin() ) {
-		global $tgbot_options;
-		global $my_bitbucket_updater;
-		$my_bitbucket_updater = new BitbucketPluginUpdater(
-			TGBOT_PLUGIN_MAIN_FILE, // Путь к главному файлу плагина
-			'mcarena77', // Workspace slug (например, 'mycompany')
-			'tg-bot', // Название репозитория
-			$tgbot_options->get_option( 'upd_bitbucket_token' ) ?? '', // API Token (опционально, для приватных репозиториев)
-			false
-		);
-	}
-} );

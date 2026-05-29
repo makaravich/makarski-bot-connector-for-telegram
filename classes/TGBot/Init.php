@@ -70,8 +70,7 @@ class Init {
      * @return void
      */
     public static function custom_rewrite_rule(): void {
-        global $tgbot_options;
-        $regex = '^' . $tgbot_options->get_option('gen_tg_endpoint') . '/?$';
+        $regex = '^' . tgbot_get_option( 'gen_tg_endpoint' ) . '/?$';
 
         add_rewrite_rule($regex, 'index.php?tgbot_action=tg_call', 'top');
     }
@@ -113,11 +112,9 @@ class Init {
         if ($custom_action === 'tg_call') {
             self::finish_request();
 
-            global $tgbot_options;
-            $bot = new TGBot($tgbot_options->get_option('gen_tg_token'), true, $this->bot_map);
+            $bot = new TGBot( tgbot_get_option( 'gen_tg_token' ), true, $this->bot_map );
 
             $request_respond = $bot->get_request();
-            error_log('{DEBUG} Bot request: ' . print_r($request_respond, true));
 
             do_action('tgbot_bot_call', $bot);
 

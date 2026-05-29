@@ -69,7 +69,6 @@ class Simple_Tg_Bot {
         if ($do_get_request && !isset($this->map['request_respond'])) {
             $this->get_request();
         } elseif (isset($this->map['request_respond'])) {
-            //error_log('{DEBUG BOT} Run set_existing_request_respond');
             $this->set_existing_request_respond($this->map['request_respond']);
         }
     }
@@ -186,8 +185,6 @@ class Simple_Tg_Bot {
         if ($reply_markup) {
             $data['reply_markup'] = json_encode($reply_markup);
         }
-
-        //error_log('{DEBUG MARKDOWN} ' . print_r($data, true));
 
         return $this->send_request($url, $data);
     }
@@ -367,8 +364,6 @@ class Simple_Tg_Bot {
             'photo' => new CURLFile(realpath($photo_path)),
             'caption' => $caption
         ];
-
-        //error_log('{DEBUG IMAGES} ' . print_r($data, true));
 
         return $this->send_request($url, $data);
     }
@@ -595,13 +590,9 @@ class Simple_Tg_Bot {
 
         $response = curl_exec($ch);
 
-        //error_log('{DEBUG CURL} ' . $response);
-
         curl_close($ch);
 
         $this->last_request_response = json_decode($response);
-
-        //error_log('{DEBUG RESPONSE} ' . print_r($this->last_request_response, true));
 
         if (!$this->last_request_response->ok) {
             error_log('[ERROR WITH THE REQUEST]. Dump: ' . print_r($this->last_request_response, true));
@@ -730,9 +721,6 @@ class Simple_Tg_Bot {
         elseif (isset($message->sticker)) {
             $fileId = $message->sticker->file_id;
         }
-
-        //error_log('[Get File debug]' . print_r($message, true));
-        //error_log('[Get File debug file ID]' . $fileId);
 
         // If no file found
         if (!$fileId) {

@@ -95,8 +95,7 @@ class Core {
 	 */
 	public static function set_tg_webhook( string $relative_url, string $token = '' ): void {
 		if ( empty( $token ) ) {
-			global $tgbot_options;
-			$token = $tgbot_options->get_option( 'gen_tg_token' );
+			$token = tgbot_get_option( 'gen_tg_token' );
 		}
 
 		if ( $token ) {

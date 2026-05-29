@@ -39,8 +39,7 @@ class ProcessMessages {
             Core::set_current_user($user_id);
 
             // Re-create the bot to update translations
-            global $tgbot_options;
-            $token = $tgbot_options->get_option('gen_tg_token');
+            $token = tgbot_get_option( 'gen_tg_token' );
             $bot_map = $bot->get_map();
             $bot_map['request_respond'] = $bot->request_respond;
 
@@ -130,8 +129,6 @@ class ProcessMessages {
 
         $user_data = self::$bot->request_respond->message->from ?? null;
 
-        //error_log( '{USER DEBUG}' . print_r( self::$bot, true ) );
-
         $username = sanitize_user($tg_id);
         $password = wp_generate_password();
         $email = $username . '@example.com'; // Fake email can be replaced
@@ -192,12 +189,8 @@ class ProcessMessages {
      * @return array|bool
      */
     private static function process_message($bot, $user_id, object|string $message): array|bool {
-        //error_log( '[*Plugin process_message START*] ' . print_r( $message, true ) );
-
         $multimedia_message = self::prepare_multimedia_message($bot, $user_id, $message);
-        if ($multimedia_message /* && ( ! empty( $multimedia_message->text ) && ! empty( $multimedia_message->files ) )*/) {
-            error_log('{Multimedia Message Debugging} ' . print_r($multimedia_message, true));
-
+        if ($multimedia_message) {
             do_action('tgbot_process_multimedia_message', $bot, $user_id, $multimedia_message);
         }
 

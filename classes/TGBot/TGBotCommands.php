@@ -9,8 +9,6 @@ class TGBotCommands {
         $bot_map = $bot->get_map();
         $user_data = $bot_map->request_respond->message->from ?? null;
 
-        //error_log('{USER DATA}' . print_r($user_data, true));
-
         $bot->send_message(__('Start command','tgbot'));
     }
 }

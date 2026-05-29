@@ -1,0 +1,7 @@
+.git
+.gitignore
+.distignore
+watcher/
+admin/styles/admin.scss
+admin/styles/admin.css.map
+*.pot~
