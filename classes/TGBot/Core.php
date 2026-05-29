@@ -78,9 +78,9 @@ class Core {
 		// Set current language
 		switch_to_locale( $current_lang );
 
-		// Reload translations
+		// Reload translations for the user's locale
 		add_action( 'init', function () {
-			load_plugin_textdomain( 'tgbot' );
+			load_plugin_textdomain( 'tgbot', false, dirname( plugin_basename( TGBOT_PLUGIN_MAIN_FILE ) ) . '/languages/' );
 		} );
 	}
 

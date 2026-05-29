@@ -101,7 +101,7 @@ class Simple_Tg_Bot {
     public function run_command($command): void {
         $command = ltrim($command, '/');
         if (strlen($command) > 100) {
-            $this->send_message(__('Too long command'));
+            $this->send_message(__('Too long command', 'tgbot'));
         } else {
             if (method_exists($this, 'command_' . $command)) {
                 call_user_func([$this, 'command_' . $command]);

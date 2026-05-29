@@ -11,6 +11,10 @@ class Init {
                 'help_message' => self::get_help_message(),
         ];
 
+        add_action( 'plugins_loaded', function () {
+            load_plugin_textdomain( 'tgbot', false, dirname( plugin_basename( TGBOT_PLUGIN_MAIN_FILE ) ) . '/languages/' );
+        } );
+
         // Add styles and scripts on admin side
         add_action('admin_enqueue_scripts', [$this, 'add_admin_assets']);
 

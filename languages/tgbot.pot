@@ -1,0 +1,104 @@
+# Copyright (C) 2026 Dzmitry Makarski
+# This file is distributed under the GPLv2.
+msgid ""
+msgstr ""
+"Project-Id-Version: Telegram Messenger Integration 0.2.16\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/tg-bot\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-05-29T17:57:51+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: tgbot\n"
+
+#. Plugin Name of the plugin
+#: tg-bot.php
+msgid "Telegram Messenger Integration"
+msgstr ""
+
+#. Description of the plugin
+#: tg-bot.php
+msgid "Allows you to manage your Telegram bot via WordPress"
+msgstr ""
+
+#. Author of the plugin
+#: tg-bot.php
+msgid "Dzmitry Makarski"
+msgstr ""
+
+#: classes/Simple_Tg_Bot.php:104
+#: classes/TGBot/TGBot.php:12
+msgid "Too long command"
+msgstr ""
+
+#: classes/TGBot/Core.php:45
+msgid "Back"
+msgstr ""
+
+#: classes/TGBot/Core.php:57
+msgid "Next"
+msgstr ""
+
+#: classes/TGBot/Init.php:48
+msgid "This is an awesome Telegram bot! 😉"
+msgstr ""
+
+#: classes/TGBot/Init.php:172
+msgid "Enter your nick in Telegram (without @)"
+msgstr ""
+
+#: classes/TGBot/Init.php:187
+msgid "Telegram Nickname"
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:33
+#: classes/TGBot/ProcessMessages.php:84
+msgid "Error"
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:122
+msgid "The Chat ID is empty."
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:163
+msgid "User already exists."
+msgstr ""
+
+#: classes/TGBot/TGBot.php:28
+msgid "Unknown command: "
+msgstr ""
+
+#: classes/TGBot/TGBotCommands.php:12
+msgid "Start command"
+msgstr ""
+
+#: inc/tgbot_options.php:27
+msgid "Telegram Integration Options"
+msgstr ""
+
+#: inc/tgbot_options.php:28
+msgid "Telegram settings"
+msgstr ""
+
+#: inc/tgbot_options.php:44
+msgid "Telegram options"
+msgstr ""
+
+#: inc/tgbot_options.php:51
+msgid "Telegram Token"
+msgstr ""
+
+#: inc/tgbot_options.php:60
+msgid "Telegram endpoint"
+msgstr ""
+
+#: inc/tgbot_options.php:69
+msgid "Automatically set the webhook when save"
+msgstr ""
+
+#: inc/tgbot_options.php:85
+msgid "Save"
+msgstr ""
