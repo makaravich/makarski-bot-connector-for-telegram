@@ -38,7 +38,7 @@ class Polling {
 			// Remove webhook so Telegram sends updates to getUpdates instead
 			$token = tgbot_get_option( 'gen_tg_token' );
 			if ( $token ) {
-				$bot = new \Simple_Tg_Bot( $token, false );
+				$bot = new BotApi( $token, false );
 				$bot->delete_webhook();
 			}
 
@@ -73,7 +73,7 @@ class Polling {
 		}
 
 		$offset = (int) get_option( self::OFFSET_OPTION, 0 );
-		$bot    = new \Simple_Tg_Bot( $token, false );
+		$bot    = new BotApi( $token, false );
 
 		$url = "https://api.telegram.org/bot{$token}/getUpdates?timeout=0&limit=100"
 			. ( $offset > 0 ? "&offset={$offset}" : '' );
@@ -105,7 +105,7 @@ class Polling {
 	/**
 	 * Inject one update into the bot and fire the same hook as webhook mode.
 	 */
-	private static function process_update( \Simple_Tg_Bot $bot, object $update ): void {
+	private static function process_update( \BotApi $bot, object $update ): void {
 		$bot_map = [
 			'auto_exec'       => false,
 			'help_message'    => Init::get_help_message(),
@@ -113,7 +113,7 @@ class Polling {
 		];
 
 		$token   = tgbot_get_option( 'gen_tg_token' );
-		$new_bot = new \TGBot\TGBot( $token, false, $bot_map );
+		$new_bot = new Bot( $token, false, $bot_map );
 
 		do_action( 'tgbot_bot_call', $new_bot );
 

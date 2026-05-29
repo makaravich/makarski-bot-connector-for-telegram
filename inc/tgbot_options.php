@@ -269,7 +269,7 @@ function tgbot_ajax_webhook_action(): void {
         wp_send_json_error(['message' => __('Telegram token is not configured.', 'tgbot')]);
     }
 
-    $bot = new Simple_Tg_Bot($token, false);
+    $bot = new \TGBot\BotApi( $token, false );
 
     switch ($action) {
         case 'check':

@@ -5,7 +5,7 @@ namespace TGBot;
 use WP_Error;
 
 class ProcessMessages {
-    private static TgBot $bot;
+    private static Bot $bot;
 
     public static function init(): void {
         add_action('tgbot_bot_call', [__CLASS__, 'process_bot_call']);
@@ -45,7 +45,7 @@ class ProcessMessages {
 
             unset($bot);
 
-            $bot = new TGBot($token, false, $bot_map);
+            $bot = new Bot($token, false, $bot_map);
 
             // Get command from the bot
             $command = $bot->get_last_received_text();
@@ -56,8 +56,8 @@ class ProcessMessages {
             // Try to parse JSON
             $data_command = Core::parse_data_command($bot);
 
-            if (is_callable(['TGBotCommands', $data_command->command ?? ''])) {
-                call_user_func(['TGBotCommands', $data_command->command], $bot);
+            if (is_callable(['BotCommands', $data_command->command ?? ''])) {
+                call_user_func(['BotCommands', $data_command->command], $bot);
             }
 
             // Return if the message is empty

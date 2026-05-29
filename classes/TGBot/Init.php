@@ -121,7 +121,7 @@ class Init {
         if ($custom_action === 'tg_call') {
             self::finish_request();
 
-            $bot = new TGBot( tgbot_get_option( 'gen_tg_token' ), true, $this->bot_map );
+            $bot = new Bot( tgbot_get_option( 'gen_tg_token' ), true, $this->bot_map );
 
             $request_respond = $bot->get_request();
 

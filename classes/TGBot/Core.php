@@ -2,8 +2,6 @@
 
 namespace TGBot;
 
-use Simple_Tg_Bot;
-
 class Core {
 	/**
 	 * Parse a received message to separate command for the bot and its data
@@ -101,7 +99,7 @@ class Core {
 		if ( $token ) {
 			$full_endpoint = get_home_url( null, $relative_url );
 
-			$bot = new Simple_Tg_Bot( $token, false );
+			$bot = new BotApi( $token, false );
 			$bot->set_webhook( $full_endpoint );
 		} else {
 			error_log( '{error} There is no endpoint value when registration new TG Endpoint' );
