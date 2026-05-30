@@ -2,13 +2,13 @@
 Contributors: mcarena77
 Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.30
+Stable tag: 0.2.35
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Connect your WordPress site to a Telegram bot. Receive messages, handle commands, send notifications, and build custom bot logic using WordPress hooks.
+Connect WordPress to a Telegram bot. Handle messages, commands, payments and build custom bot logic using WordPress action hooks.
 
 == Description ==
 
