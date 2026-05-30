@@ -221,6 +221,7 @@ function tgbot_field_checkbox(array $args): void {
 }
 
 function tgbot_sanitize_options($input): array {
+    error_log( '[TGBot] sanitize_options called, mode=' . ( $input['gen_tg_mode'] ?? '?' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
     $clean = [];
 
     if (isset($input['gen_tg_token'])) {
@@ -237,16 +238,15 @@ function tgbot_sanitize_options($input): array {
 
     $clean['gen_tg_polling_interval'] = max(5, min(3600, (int)($input['gen_tg_polling_interval'] ?? 30)));
 
-    // Always reschedule on every Save — sanitize_callback fires even when value is unchanged,
-    // unlike update_option hooks which are skipped when nothing changed.
+    // Reschedule on every Save when mode=polling — sanitize_callback always fires,
+    // unlike update_option hooks which are skipped when value is unchanged.
+    // For polling: always delete webhook + re-register cron to ensure correct state.
     $old      = get_option( 'tgbot_options', [] );
     $new_mode = $clean['gen_tg_mode'];
     $interval = $clean['gen_tg_polling_interval'];
     $old_mode = $old['gen_tg_mode'] ?? 'webhook';
-    $old_interval = (int) ( $old['gen_tg_polling_interval'] ?? 30 );
-    $cron_missing = $new_mode === 'polling' && ! wp_next_scheduled( \TGBot\Polling::CRON_HOOK );
 
-    if ( $new_mode !== $old_mode || $interval !== $old_interval || $cron_missing ) {
+    if ( $new_mode === 'polling' || $new_mode !== $old_mode ) {
         \TGBot\Polling::reschedule( $new_mode, $interval );
     }
 
