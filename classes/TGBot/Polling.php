@@ -71,6 +71,10 @@ class Polling {
 	 * One polling tick: fetch updates from Telegram and process each one.
 	 */
 	public static function tick(): void {
+		if ( ! ( tgbot_get_option( 'gen_tg_enabled' ) ?? true ) ) {
+			return;
+		}
+
 		$token = tgbot_get_option( 'gen_tg_token' );
 		if ( ! $token ) {
 			return;

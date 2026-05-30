@@ -61,10 +61,11 @@ class Init {
         if ( in_array( $hook, $js_hooks, true ) ) {
             wp_enqueue_script( 'tgbot-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [ 'jquery' ], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js' ), true );
             wp_localize_script( 'tgbot-admin-script', 'tgbotAdmin', [
-                'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'tgbot_admin' ),
-                'siteUrl'  => get_home_url(),
-                'endpoint' => tgbot_get_option( 'gen_tg_endpoint' ) ?? '',
+                'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+                'nonce'         => wp_create_nonce( 'tgbot_admin' ),
+                'siteUrl'       => get_home_url(),
+                'endpoint'      => tgbot_get_option( 'gen_tg_endpoint' ) ?? '',
+                'labelDisabled' => __( 'Disabled', 'tg-bot' ),
             ] );
         }
     }
@@ -117,6 +118,10 @@ class Init {
 
         if ($custom_action === 'tg_call') {
             self::finish_request();
+
+            if ( ! ( tgbot_get_option( 'gen_tg_enabled' ) ?? true ) ) {
+                exit;
+            }
 
             $bot = new Bot( tgbot_get_option( 'gen_tg_token' ), true, $this->bot_map );
 

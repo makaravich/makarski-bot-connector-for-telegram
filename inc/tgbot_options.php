@@ -44,6 +44,22 @@ function tgbot_register_settings(): void {
             ['sanitize_callback' => 'tgbot_sanitize_options']
     );
 
+    // Section: Bot status
+    add_settings_section(
+            'tgbot_section_status',
+            __('Bot status', 'tg-bot'),
+            '__return_false',
+            'tgbot_options_page'
+    );
+
+    add_settings_field(
+            'gen_tg_enabled',
+            __('Enable bot', 'tg-bot'),
+            'tgbot_field_enabled',
+            'tgbot_options_page',
+            'tgbot_section_status'
+    );
+
     // Section: Telegram
     add_settings_section(
             'tgbot_section_telegram',
@@ -220,8 +236,27 @@ function tgbot_field_checkbox(array $args): void {
     );
 }
 
+function tgbot_field_enabled(): void {
+    $enabled = (bool) ( tgbot_get_option( 'gen_tg_enabled' ) ?? true );
+    $id      = 'tgbot_enabled_toggle';
+    ?>
+    <label class="tgbot-toggle" for="<?php echo esc_attr( $id ); ?>">
+        <input type="hidden"   name="tgbot_options[gen_tg_enabled]" value="0" />
+        <input type="checkbox" name="tgbot_options[gen_tg_enabled]" value="1"
+               id="<?php echo esc_attr( $id ); ?>"
+               <?php checked( $enabled ); ?> />
+        <span class="tgbot-toggle__track"></span>
+        <span class="tgbot-toggle__label">
+            <?php echo $enabled ? esc_html__( 'Active', 'tg-bot' ) : esc_html__( 'Disabled', 'tg-bot' ); ?>
+        </span>
+    </label>
+    <?php
+}
+
 function tgbot_sanitize_options($input): array {
     $clean = [];
+
+    $clean['gen_tg_enabled'] = ! empty( $input['gen_tg_enabled'] );
 
     if (isset($input['gen_tg_token'])) {
         $clean['gen_tg_token'] = sanitize_text_field($input['gen_tg_token']);
@@ -239,13 +274,15 @@ function tgbot_sanitize_options($input): array {
 
     // Reschedule on every Save when mode=polling — sanitize_callback always fires,
     // unlike update_option hooks which are skipped when value is unchanged.
-    // For polling: always delete webhook + re-register cron to ensure correct state.
     $old      = get_option( 'tgbot_options', [] );
     $new_mode = $clean['gen_tg_mode'];
     $interval = $clean['gen_tg_polling_interval'];
     $old_mode = $old['gen_tg_mode'] ?? 'webhook';
 
-    if ( $new_mode === 'polling' || $new_mode !== $old_mode ) {
+    if ( ! $clean['gen_tg_enabled'] ) {
+        // Bot disabled — stop everything.
+        \TGBot\Polling::unschedule();
+    } elseif ( $new_mode === 'polling' || $new_mode !== $old_mode ) {
         \TGBot\Polling::reschedule( $new_mode, $interval );
     }
 

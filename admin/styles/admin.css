@@ -29,6 +29,59 @@
   align-items: center;
 }
 
+.tgbot-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.tgbot-toggle input[type=checkbox] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.tgbot-toggle input[type=hidden] {
+  display: none;
+}
+.tgbot-toggle__track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  background: #ccc;
+  border-radius: 13px;
+  transition: background 0.22s ease;
+  flex-shrink: 0;
+}
+.tgbot-toggle__track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: left 0.22s ease;
+}
+input:checked ~ .tgbot-toggle__track {
+  background: #46b450;
+}
+input:checked ~ .tgbot-toggle__track::after {
+  left: 23px;
+}
+.tgbot-toggle__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3c3c3c;
+}
+.tgbot-toggle:hover .tgbot-toggle__track {
+  box-shadow: 0 0 0 2px rgba(0, 115, 170, 0.25);
+}
+
 .tgbot-webhook-panel {
   display: flex;
   flex-direction: column;

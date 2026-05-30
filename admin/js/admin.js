@@ -157,4 +157,13 @@ jQuery(function ($) {
         });
     });
 
+    // --- Enable/disable toggle label ---
+    var $toggle = $('#tgbot_enabled_toggle');
+    var $label  = $toggle.closest('.tgbot-toggle').find('.tgbot-toggle__label');
+    var labelOn  = $label.text().trim();
+
+    $toggle.on('change', function () {
+        $label.text(this.checked ? labelOn : tgbotAdmin.labelDisabled || 'Disabled');
+    });
+
 });
