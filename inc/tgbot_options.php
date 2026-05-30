@@ -23,6 +23,7 @@ if (!function_exists('tgbot_get_option')) {
 add_action('admin_menu', 'tgbot_add_options_page');
 add_action('admin_init', 'tgbot_register_settings');
 add_action('update_option_tgbot_options', 'tgbot_options_save', 10, 2);
+add_action('add_option_tgbot_options', function( $option, $value ) { tgbot_options_save( [], $value ); }, 10, 2);
 add_action('wp_ajax_tgbot_webhook_action', 'tgbot_ajax_webhook_action');
 
 function tgbot_add_options_page(): void {
@@ -251,8 +252,11 @@ function tgbot_options_save($old_value, $new_value): void {
         flush_rewrite_rules();
     }
 
-    if ($new_mode !== $old_mode || $interval !== (int)($old_value['gen_tg_polling_interval'] ?? 30)) {
-        \TGBot\Polling::reschedule($new_mode, $interval);
+    $old_interval = (int) ( $old_value['gen_tg_polling_interval'] ?? 30 );
+    $cron_missing = $new_mode === 'polling' && ! wp_next_scheduled( \TGBot\Polling::CRON_HOOK );
+
+    if ( $new_mode !== $old_mode || $interval !== $old_interval || $cron_missing ) {
+        \TGBot\Polling::reschedule( $new_mode, $interval );
     }
 }
 

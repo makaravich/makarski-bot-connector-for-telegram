@@ -53,7 +53,10 @@ class Polling {
 				return $schedules;
 			} );
 
-			wp_schedule_event( time(), self::CRON_SCHEDULE, self::CRON_HOOK );
+			$result = wp_schedule_event( time(), self::CRON_SCHEDULE, self::CRON_HOOK, [], true );
+			if ( is_wp_error( $result ) ) {
+				error_log( '[TGBot Polling] wp_schedule_event failed: ' . $result->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 	}
 
@@ -80,7 +83,13 @@ class Polling {
 			. ( $offset > 0 ? '&offset=' . $offset : '' );
 		$resp = wp_remote_get( $url, array( 'timeout' => 10 ) );
 
-		if ( is_wp_error( $resp ) || 200 !== wp_remote_retrieve_response_code( $resp ) ) {
+		if ( is_wp_error( $resp ) ) {
+			error_log( '[TGBot Polling] wp_remote_get error: ' . $resp->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			return;
+		}
+
+		if ( 200 !== wp_remote_retrieve_response_code( $resp ) ) {
+			error_log( '[TGBot Polling] unexpected HTTP code: ' . wp_remote_retrieve_response_code( $resp ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			return;
 		}
 
@@ -101,7 +110,7 @@ class Polling {
 	/**
 	 * Inject one update into the bot and fire the same hook as webhook mode.
 	 */
-	private static function process_update( \BotApi $bot, object $update ): void {
+	private static function process_update( BotApi $bot, object $update ): void {
 		$bot_map = [
 			'auto_exec'       => false,
 			'help_message'    => Init::get_help_message(),
