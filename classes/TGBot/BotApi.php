@@ -301,7 +301,7 @@ class BotApi {
 	 * @param string      $chat_id        Target chat ID; defaults to current chat.
 	 * @return mixed
 	 */
-	public function send_document( string $document_path, string $caption = null, string $chat_id = '' ): mixed {
+	public function send_document( string $document_path, ?string $caption = null, string $chat_id = '' ): mixed {
 		if ( '' === $chat_id ) {
 			$chat_id = $this->chat_id;
 		}
@@ -821,7 +821,6 @@ class BotApi {
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 
 		$response = curl_exec( $ch );
-		curl_close( $ch );
 		// phpcs:enable
 
 		$this->last_request_response = json_decode( $response );
