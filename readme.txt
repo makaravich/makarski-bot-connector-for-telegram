@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.37
+Stable tag: 0.2.38
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,7 +141,8 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 
 == Screenshots ==
 
-1. Settings page — token, connection mode (webhook/polling), and webhook management panel
+1. Settings page — enable/disable toggle, token, connection mode (webhook/polling)
+2. Users list — Telegram Nickname column added automatically for linked users
 
 == Changelog ==
 
