@@ -396,6 +396,269 @@ class BotApi {
 	}
 
 	/**
+	 * Send a chat action indicator (typing, uploading, etc.).
+	 *
+	 * @param string $action  One of: typing, upload_photo, record_video, upload_video,
+	 *                        record_voice, upload_voice, upload_document, choose_sticker, find_location.
+	 * @param string $chat_id Target chat. Defaults to current chat.
+	 * @return mixed
+	 */
+	public function send_chat_action( string $action, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		return $this->send_request(
+			$this->api_url . 'sendChatAction',
+			array(
+				'chat_id' => $chat_id,
+				'action'  => $action,
+			)
+		);
+	}
+
+	/**
+	 * Send an audio file.
+	 *
+	 * @param string      $audio_path Local file path.
+	 * @param string|null $caption    Optional caption (HTML).
+	 * @param string      $chat_id    Target chat.
+	 * @return mixed
+	 */
+	public function send_audio( string $audio_path, ?string $caption = null, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		$data = array(
+			'chat_id' => $chat_id,
+			'audio'   => new \CURLFile( $audio_path ),
+		);
+
+		if ( null !== $caption ) {
+			$data['caption']    = $caption;
+			$data['parse_mode'] = 'HTML';
+		}
+
+		return $this->send_multipart_request( $this->api_url . 'sendAudio', $data );
+	}
+
+	/**
+	 * Send a voice message (OGG/Opus recommended).
+	 *
+	 * @param string      $voice_path Local file path.
+	 * @param string|null $caption    Optional caption (HTML).
+	 * @param string      $chat_id    Target chat.
+	 * @return mixed
+	 */
+	public function send_voice( string $voice_path, ?string $caption = null, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		$data = array(
+			'chat_id' => $chat_id,
+			'voice'   => new \CURLFile( $voice_path ),
+		);
+
+		if ( null !== $caption ) {
+			$data['caption']    = $caption;
+			$data['parse_mode'] = 'HTML';
+		}
+
+		return $this->send_multipart_request( $this->api_url . 'sendVoice', $data );
+	}
+
+	/**
+	 * Send a video file.
+	 *
+	 * @param string      $video_path Local file path.
+	 * @param string|null $caption    Optional caption (HTML).
+	 * @param string      $chat_id    Target chat.
+	 * @return mixed
+	 */
+	public function send_video( string $video_path, ?string $caption = null, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		$data = array(
+			'chat_id' => $chat_id,
+			'video'   => new \CURLFile( $video_path ),
+		);
+
+		if ( null !== $caption ) {
+			$data['caption']    = $caption;
+			$data['parse_mode'] = 'HTML';
+		}
+
+		return $this->send_multipart_request( $this->api_url . 'sendVideo', $data );
+	}
+
+	/**
+	 * Send an animation (GIF or MP4 without sound).
+	 *
+	 * @param string      $animation_path Local file path.
+	 * @param string|null $caption        Optional caption (HTML).
+	 * @param string      $chat_id        Target chat.
+	 * @return mixed
+	 */
+	public function send_animation( string $animation_path, ?string $caption = null, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		$data = array(
+			'chat_id'   => $chat_id,
+			'animation' => new \CURLFile( $animation_path ),
+		);
+
+		if ( null !== $caption ) {
+			$data['caption']    = $caption;
+			$data['parse_mode'] = 'HTML';
+		}
+
+		return $this->send_multipart_request( $this->api_url . 'sendAnimation', $data );
+	}
+
+	/**
+	 * Forward a message from another chat.
+	 *
+	 * @param int|string $from_chat_id Source chat ID.
+	 * @param int        $message_id   Message ID to forward.
+	 * @param string     $chat_id      Target chat.
+	 * @return mixed
+	 */
+	public function forward_message( $from_chat_id, int $message_id, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		return $this->send_request(
+			$this->api_url . 'forwardMessage',
+			array(
+				'chat_id'      => $chat_id,
+				'from_chat_id' => $from_chat_id,
+				'message_id'   => $message_id,
+			)
+		);
+	}
+
+	/**
+	 * Copy a message without the "forwarded from" header.
+	 *
+	 * @param int|string  $from_chat_id Source chat ID.
+	 * @param int         $message_id   Message ID to copy.
+	 * @param string|null $caption      New caption (HTML). Null keeps the original.
+	 * @param string      $chat_id      Target chat.
+	 * @return mixed
+	 */
+	public function copy_message( $from_chat_id, int $message_id, ?string $caption = null, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		$data = array(
+			'chat_id'      => $chat_id,
+			'from_chat_id' => $from_chat_id,
+			'message_id'   => $message_id,
+		);
+
+		if ( null !== $caption ) {
+			$data['caption']    = $caption;
+			$data['parse_mode'] = 'HTML';
+		}
+
+		return $this->send_request( $this->api_url . 'copyMessage', $data );
+	}
+
+	/**
+	 * Send a geographic location.
+	 *
+	 * @param float  $latitude  Latitude (−90 to 90).
+	 * @param float  $longitude Longitude (−180 to 180).
+	 * @param string $chat_id   Target chat.
+	 * @return mixed
+	 */
+	public function send_location( float $latitude, float $longitude, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		return $this->send_request(
+			$this->api_url . 'sendLocation',
+			array(
+				'chat_id'   => $chat_id,
+				'latitude'  => $latitude,
+				'longitude' => $longitude,
+			)
+		);
+	}
+
+	/**
+	 * Delete multiple messages at once (max 100 per call).
+	 *
+	 * @param int[]  $message_ids Array of message IDs to delete.
+	 * @param string $chat_id     Target chat.
+	 * @return mixed
+	 */
+	public function delete_messages( array $message_ids, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		return $this->send_request(
+			$this->api_url . 'deleteMessages',
+			array(
+				'chat_id'     => $chat_id,
+				'message_ids' => wp_json_encode( $message_ids ),
+			)
+		);
+	}
+
+	/**
+	 * Register commands in the Telegram bot menu.
+	 *
+	 * @param array       $commands      Array of ['command' => 'name', 'description' => 'text'].
+	 * @param string|null $scope_type    BotCommandScope type ('default', 'all_private_chats', etc.).
+	 *                                   Null applies to all scopes.
+	 * @param string      $language_code ISO 639-1 code, or '' for all languages.
+	 * @return mixed
+	 */
+	public function set_my_commands( array $commands, ?string $scope_type = null, string $language_code = '' ): mixed {
+		$data = array(
+			'commands' => wp_json_encode( $commands ),
+		);
+
+		if ( null !== $scope_type ) {
+			$data['scope'] = wp_json_encode( array( 'type' => $scope_type ) );
+		}
+
+		if ( '' !== $language_code ) {
+			$data['language_code'] = $language_code;
+		}
+
+		return $this->send_request( $this->api_url . 'setMyCommands', $data );
+	}
+
+	/**
+	 * Refund a Telegram Stars payment to the user.
+	 *
+	 * @param int|string $user_id                    Telegram user ID.
+	 * @param string     $telegram_payment_charge_id Charge ID from the successful_payment object.
+	 * @return mixed
+	 */
+	public function refund_star_payment( $user_id, string $telegram_payment_charge_id ): mixed {
+		return $this->send_request(
+			$this->api_url . 'refundStarPayment',
+			array(
+				'user_id'                    => $user_id,
+				'telegram_payment_charge_id' => $telegram_payment_charge_id,
+			)
+		);
+	}
+
+	/**
 	 * Set the webhook URL.
 	 *
 	 * @param string $url Full HTTPS URL for Telegram to deliver updates.
