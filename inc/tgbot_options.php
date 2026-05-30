@@ -133,9 +133,31 @@ function tgbot_register_settings(): void {
 }
 
 function tgbot_options_page_output(): void {
+    $has_token = ! empty( tgbot_get_option( 'gen_tg_token' ) );
     ?>
     <div class="wrap">
-        <h2><?php echo esc_html(get_admin_page_title()); ?></h2>
+        <h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
+
+        <?php if ( ! $has_token ) : ?>
+        <div class="notice notice-info tgbot-quickstart">
+            <h3 style="margin:.5em 0 .4em;"><?php esc_html_e( '👋 Quick start', 'tg-bot' ); ?></h3>
+            <ol style="margin:.3em 0 .6em 1.4em;line-height:1.7;">
+                <li><?php printf(
+                    /* translators: %s: link to BotFather */
+                    esc_html__( 'Create a bot and copy its token from %s.', 'tg-bot' ),
+                    '<a href="https://t.me/BotFather" target="_blank">@BotFather</a>'
+                ); ?></li>
+                <li><?php esc_html_e( 'Paste the token into the "Telegram Token" field below and click Save.', 'tg-bot' ); ?></li>
+                <li><?php esc_html_e( 'Choose a connection mode:', 'tg-bot' ); ?>
+                    <ul style="margin:.2em 0 0 1.2em;list-style:disc;">
+                        <li><?php esc_html_e( 'Webhook — requires a public HTTPS URL. After saving, click Set Webhook.', 'tg-bot' ); ?></li>
+                        <li><?php esc_html_e( 'Polling — works on any hosting including localhost. Starts automatically on Save.', 'tg-bot' ); ?></li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        <?php endif; ?>
+
         <form action="options.php" method="POST" class="wpt-form">
             <?php
             settings_fields('tgbot_options_group');
