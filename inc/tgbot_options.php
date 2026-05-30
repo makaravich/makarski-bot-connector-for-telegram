@@ -221,7 +221,6 @@ function tgbot_field_checkbox(array $args): void {
 }
 
 function tgbot_sanitize_options($input): array {
-    error_log( '[TGBot] sanitize_options called, mode=' . ( $input['gen_tg_mode'] ?? '?' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
     $clean = [];
 
     if (isset($input['gen_tg_token'])) {
