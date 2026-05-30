@@ -65,7 +65,11 @@ class ProcessMessages {
                 // return;
             }
 
-            if (str_starts_with($command, '/')) {
+            $clean_command    = ltrim( $command, '/' );
+            $is_slash_command = str_starts_with( $command, '/' );
+            $is_registered    = ! empty( $clean_command ) && isset( get_registered_bot_commands()[ $clean_command ] );
+
+            if ( $is_slash_command || $is_registered ) {
                 // Do command
                 do_action( 'tgbot_handle_custom_bot_commands', $bot, $user_id, $command );
 
