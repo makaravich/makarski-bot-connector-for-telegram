@@ -131,7 +131,7 @@ class ProcessMessages {
 
         $username = sanitize_user($tg_id);
         $password = wp_generate_password();
-        $email = $username . '@example.com'; // Fake email can be replaced
+        $email    = 'tg-' . $tg_id . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
 
         if (!username_exists($username)) {
             $user_id = wp_create_user($username, $password, $email);
