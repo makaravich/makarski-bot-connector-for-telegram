@@ -448,8 +448,10 @@ class BotApi {
 		$this->request_respond = json_decode( $input );
 
 		$this->update_chat_id();
+
+		$callback_data = $this->request_respond->callback_query->data ?? null;
 		$this->set_last_received_text(
-			$this->request_respond->message->text ?? $this->request_respond->message->caption ?? ''
+			$callback_data ?? $this->request_respond->message->text ?? $this->request_respond->message->caption ?? ''
 		);
 
 		return $this->request_respond;
@@ -464,8 +466,11 @@ class BotApi {
 		$this->request_respond = $request_respond;
 
 		$this->update_chat_id();
+
+		// For callback queries, use callback_data as the command; otherwise use message text.
+		$callback_data = $request_respond->callback_query->data ?? null;
 		$this->set_last_received_text(
-			$this->request_respond->message->text ?? $this->request_respond->message->caption ?? ''
+			$callback_data ?? $this->request_respond->message->text ?? $this->request_respond->message->caption ?? ''
 		);
 	}
 
