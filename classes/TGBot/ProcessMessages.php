@@ -189,39 +189,55 @@ class ProcessMessages {
      * @return array|bool
      */
     private static function process_message($bot, $user_id, object|string $message): array|bool {
-        $multimedia_message = self::prepare_multimedia_message($bot, $user_id, $message);
-        if ($multimedia_message) {
-            do_action('tgbot_process_multimedia_message', $bot, $user_id, $multimedia_message);
+        $normalized = self::prepare_message( $bot, $user_id, $message );
+
+        // Primary hook — fires for all message types (text, media, callback_query).
+        do_action( 'tgbot_message', $bot, $user_id, $normalized );
+
+        // Backward-compatibility alias — deprecated, use tgbot_message instead.
+        if ( has_action( 'tgbot_process_multimedia_message' ) ) {
+            do_action( 'tgbot_process_multimedia_message', $bot, $user_id, $normalized );
         }
 
-        do_action('tgbot_process_message', $bot, $user_id, $message);
+        // Raw update hook for advanced use cases.
+        do_action( 'tgbot_raw_message', $bot, $user_id, $message );
 
-        //$bot->send_message($message);
         return false;
     }
 
     /**
-     * Prepare a multimedia message object
+     * Normalize any incoming update into a consistent message object.
+     *
+     * Returns an object with:
+     *   - type           (string)  'text' | 'image' | 'video' | 'audio' | 'voice' |
+     *                              'video_note' | 'sticker' | 'document' | 'callback_query'
+     *   - text           (string)  message text, caption, or callback data
+     *   - files          (int[])   WP attachment IDs of downloaded files (one per update)
+     *   - has_media_group (bool)   true when this update is part of a multi-file album
+     *   - media_group_id (string)  Telegram media_group_id, or '' if not part of a group
+     *
+     * Note: each file in a media group arrives as a separate update with the same
+     * media_group_id. Handle each update individually or group them yourself using
+     * media_group_id as the key.
      *
      * @param $bot
      * @param $user_id
      * @param object|string $original_message
-     *
      * @return object
      */
-    private static function prepare_multimedia_message($bot, $user_id, object|string $original_message): object {
-        $message = $original_message->message;
-        $document_type = self::detect_media_type($message);
+    private static function prepare_message( $bot, $user_id, object|string $original_message ): object {
+        $message       = $original_message->message ?? (object) [];
+        $document_type = self::detect_media_type( $message );
 
-        if ($document_type) {
-            return self::prepare_media_message($message, $document_type, $original_message);
+        if ( $document_type ) {
+            return self::prepare_media_message( $message, $document_type, $original_message );
         }
 
-        if ($original_message->callback_query->data) {
-            return self::prepare_callback_query_message($original_message);
+        if ( ! empty( $original_message->callback_query->data ) ) {
+            return self::prepare_callback_query_message( $original_message );
         }
 
-        return self::prepare_text_message($message);
+        return self::prepare_text_message( $message );
     }
 
     /**
@@ -249,14 +265,15 @@ class ProcessMessages {
      * Prepare media message object
      */
     private static function prepare_media_message($message, string $document_type, $original_message): object {
-        $group_id = $message->media_group_id ?? 0;
-        $files = self::download_media_file($original_message);
+        $group_id = $message->media_group_id ?? '';
+        $files    = self::download_media_file($original_message);
 
         return (object)[
-            'text' => $message->caption ?? '',
-            'files' => $files,
-            'has_media_group' => (bool)$group_id,
-            'type' => $document_type,
+            'type'            => $document_type,
+            'text'            => $message->caption ?? '',
+            'files'           => $files,
+            'has_media_group' => $group_id !== '',
+            'media_group_id'  => (string) $group_id,
         ];
     }
 
@@ -283,23 +300,22 @@ class ProcessMessages {
      */
     private static function prepare_text_message($message): object {
         return (object)[
-            'text' => $message->text ?? '',
-            'files' => [],
+            'type'            => 'text',
+            'text'            => $message->text ?? '',
+            'files'           => [],
             'has_media_group' => false,
-            'type' => 'text',
+            'media_group_id'  => '',
         ];
     }
 
     private static function prepare_callback_query_message($message): object {
-        $type = 'callback_query';
-        $text = $message->callback_query->data ?? '';
-
         return (object)[
-            'text' => $text,
-            'files' => [],
+            'type'            => 'callback_query',
+            'text'            => $message->callback_query->data ?? '',
+            'files'           => [],
             'has_media_group' => false,
-            'type' => $type,
-            'callback_query' => $message->callback_query,
+            'media_group_id'  => '',
+            'callback_query'  => $message->callback_query,
         ];
     }
 
