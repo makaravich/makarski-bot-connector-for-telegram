@@ -237,7 +237,7 @@ class ProcessMessages {
             return self::prepare_media_message( $message, $document_type, $original_message );
         }
 
-        if ( ! empty( $original_message->callback_query->data ) ) {
+        if ( ! empty( $original_message->callback_query?->data ) ) {
             return self::prepare_callback_query_message( $original_message );
         }
 
