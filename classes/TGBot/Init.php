@@ -95,20 +95,21 @@ class Init {
     }
 
     public static function finish_request(): void {
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        header("Content-Encoding: none");
-        header("Connection: close");
-        ignore_user_abort(true);
-
-        // Send response
+        ob_start();
         echo 'OK';
         $size = ob_get_length();
-        header("Content-Length: $size");
+
+        header( 'Content-Encoding: none' );
+        header( 'Content-Length: ' . $size );
+        header( 'Connection: close' );
+        ignore_user_abort( true );
+
         ob_end_flush();
         flush();
+
+        if ( function_exists( 'fastcgi_finish_request' ) ) {
+            fastcgi_finish_request();
+        }
     }
 
     function custom_action_handler(): void {

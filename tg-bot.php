@@ -3,12 +3,12 @@
  * Telegram Messenger Integration
  *
  * @author        Dzmitry Makarski
- * @version       0.2.17
+ * @version       0.2.18
  *
  * @wordpress-plugin
  * Plugin Name:       Telegram Messenger Integration
  * Description:       Allows you to manage your Telegram bot via WordPress
- * Version:           0.2.17
+ * Version:           0.2.18
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * License:           GPLv2
@@ -55,6 +55,11 @@ require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_options.php';
 
 // Plugin Functions
 require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_functions.php';
+
+// Load translations before any init callbacks use __()
+add_action( 'init', function () {
+	load_plugin_textdomain( 'tg-bot', false, dirname( TGBOT_PLUGIN_BASENAME ) . '/languages' );
+}, 1 );
 
 // Deactivation: stop polling cron
 register_deactivation_hook( __FILE__, function () {
