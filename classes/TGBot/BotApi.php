@@ -500,7 +500,12 @@ class BotApi {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( '[TGBot ERROR] ' . $response->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				'[TGBot] send_request WP_Error: code=%s message=%s url=%s',
+				$response->get_error_code(),
+				$response->get_error_message(),
+				$url
+			) );
 			$this->last_request_response = (object) array(
 				'ok'          => false,
 				'description' => $response->get_error_message(),
@@ -508,10 +513,23 @@ class BotApi {
 			return $this->last_request_response;
 		}
 
-		$this->last_request_response = json_decode( wp_remote_retrieve_body( $response ) );
+		$http_code = wp_remote_retrieve_response_code( $response );
+		$body      = wp_remote_retrieve_body( $response );
+
+		if ( $http_code !== 200 ) {
+			error_log( sprintf( '[TGBot] send_request unexpected HTTP %d for %s', $http_code, $url ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+
+		$this->last_request_response = json_decode( $body );
+
+		if ( empty( $this->last_request_response ) ) {
+			error_log( sprintf( '[TGBot] send_request empty/invalid JSON. HTTP=%d body=%s url=%s', $http_code, substr( $body, 0, 200 ), $url ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			$this->last_request_response = (object) array( 'ok' => false, 'description' => 'Invalid JSON response' );
+			return $this->last_request_response;
+		}
 
 		if ( ! $this->last_request_response->ok ) {
-			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( '[TGBot] send_request Telegram error: %s url=%s', $this->last_request_response->description ?? 'Unknown', $url ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		return $this->last_request_response;
