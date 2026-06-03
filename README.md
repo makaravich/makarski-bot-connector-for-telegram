@@ -21,7 +21,7 @@ WordPress plugin that connects your site to a Telegram bot. Handles all Telegram
 
 ## Installation
 
-1. Upload the `tg-bot` folder to `wp-content/plugins/`
+1. Upload the `makarski-bot-connector-for-telegram` folder to `wp-content/plugins/`
 2. Activate via **Plugins → Installed Plugins**
 3. Go to **Settings → Telegram settings**
 4. Paste your bot token (from [@BotFather](https://t.me/BotFather)) and click **Save**

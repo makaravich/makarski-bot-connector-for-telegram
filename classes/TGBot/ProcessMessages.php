@@ -30,7 +30,7 @@ class ProcessMessages {
         $user_data = self::get_user_from_chat_id($chat_id);
 
         if (is_array($user_data) && !$user_data['success']) {
-            $bot->send_message($user_data['error'] ?? __('Error', 'tg-bot'));
+            $bot->send_message($user_data['error'] ?? __('Error', 'makarski-bot-connector-for-telegram'));
 
             return;
         } elseif (is_int($user_data) && $user_data != 0) {
@@ -85,7 +85,7 @@ class ProcessMessages {
                                 }*/
             }
         } else {
-            $bot->send_message(__('Error', 'tg-bot'));
+            $bot->send_message(__('Error', 'makarski-bot-connector-for-telegram'));
         }
 
     }
@@ -123,7 +123,7 @@ class ProcessMessages {
         if (!$tg_id) {
             return [
                 'success' => false,
-                'error' => __('The Chat ID is empty.', 'tg-bot')
+                'error' => __('The Chat ID is empty.', 'makarski-bot-connector-for-telegram')
             ];
         }
 
@@ -141,12 +141,16 @@ class ProcessMessages {
             $user_id = wp_create_user($username, $password, $email);
 
             if (!is_wp_error($user_id)) {
-                wp_update_user([
+                $update_result = wp_update_user([
                     'ID' => $user_id,
                     'first_name' => sanitize_text_field($user_data->first_name ?? 'null'),
                     'last_name' => sanitize_text_field($user_data->last_name ?? 'null'),
                     'locale' => self::get_user_locale($user_data),
                 ]);
+
+                if (is_wp_error($update_result)) {
+                    error_log('[TGBot] wp_update_user failed for user ' . $user_id . ': ' . $update_result->get_error_message()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                }
 
                 update_user_meta($user_id, 'tg_nickname', sanitize_user($user_data->username ?? null));
 
@@ -164,7 +168,7 @@ class ProcessMessages {
         } else {
             return [
                 'success' => false,
-                'error' => __('User already exists.', 'tg-bot')
+                'error' => __('User already exists.', 'makarski-bot-connector-for-telegram')
             ];
         }
     }
@@ -291,7 +295,7 @@ class ProcessMessages {
         if (!empty(trim($document_url))) {
             $document_wp = self::download_remote_file_to_media_library($document_url);
 
-            if (!empty($document_wp['attachment_id'])) {
+            if (!is_wp_error($document_wp) && !empty($document_wp['attachment_id'])) {
                 $files[] = $document_wp['attachment_id'];
             }
         }
@@ -459,7 +463,7 @@ class ProcessMessages {
      * @return string
      */
     private static function get_user_locale($user_data): string {
-        $locale = sanitize_text_field($user_data->language_code);
+        $locale = sanitize_text_field($user_data?->language_code ?? '');
 
         $locales = [
             'en' => 'en_US',

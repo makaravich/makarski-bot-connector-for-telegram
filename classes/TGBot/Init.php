@@ -42,7 +42,7 @@ class Init {
      * @return string
      */
     public static function get_help_message(): string {
-        $default_message = __('This is an awesome Telegram bot! 😉', 'tg-bot');
+        $default_message = __('This is an awesome Telegram bot! 😉', 'makarski-bot-connector-for-telegram');
 
         return apply_filters('tgbot_help_message', $default_message);
     }
@@ -65,7 +65,7 @@ class Init {
                 'nonce'         => wp_create_nonce( 'tgbot_admin' ),
                 'siteUrl'       => get_home_url(),
                 'endpoint'      => tgbot_get_option( 'gen_tg_endpoint' ) ?? '',
-                'labelDisabled' => __( 'Disabled', 'tg-bot' ),
+                'labelDisabled' => __( 'Disabled', 'makarski-bot-connector-for-telegram' ),
             ] );
         }
     }
@@ -181,7 +181,7 @@ class Init {
                            value="<?php echo esc_attr(get_the_author_meta('tg_nickname', $user->ID)); ?>"
                            class="regular-text"/>
                     <?php wp_nonce_field( 'tgbot_save_user_fields', 'tgbot_nonce' ); ?>
-                    <p class="description"><?php esc_html_e( 'Enter your nick in Telegram (without @)', 'tg-bot' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'Enter your nick in Telegram (without @)', 'makarski-bot-connector-for-telegram' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -196,7 +196,7 @@ class Init {
      * @return mixed
      */
     function add_tg_nickname_column($columns): mixed {
-        $columns['tg_nickname'] = __('Telegram Nickname', 'tg-bot');
+        $columns['tg_nickname'] = __('Telegram Nickname', 'makarski-bot-connector-for-telegram');
 
         return $columns;
     }

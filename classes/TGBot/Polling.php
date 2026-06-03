@@ -22,7 +22,7 @@ class Polling {
 		$schedules[ self::CRON_SCHEDULE ] = [
 			'interval' => max( 5, $interval ),
 			/* translators: %d is the polling interval in seconds */
-			'display'  => sprintf( __( 'Every %d seconds', 'tg-bot' ), $interval ),
+			'display'  => sprintf( __( 'Every %d seconds', 'makarski-bot-connector-for-telegram' ), $interval ),
 		];
 
 		return $schedules;

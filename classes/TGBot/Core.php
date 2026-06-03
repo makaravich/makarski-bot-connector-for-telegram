@@ -40,7 +40,7 @@ class Core {
 
 		if ( $posts_obj->has_previous ) {
 			$prev_button   = [
-				'text'          => '◀️ ' . __( 'Back', 'tg-bot' ),
+				'text'          => '◀️ ' . __( 'Back', 'makarski-bot-connector-for-telegram' ),
 				'callback_data' => json_encode( [
 					'command'    => 'links',
 					'page'       => $page - 1,
@@ -52,7 +52,7 @@ class Core {
 
 		if ( $posts_obj->has_next ) {
 			$next_button   = [
-				'text'          => __( 'Next', 'tg-bot' ) . ' ▶️',
+				'text'          => __( 'Next', 'makarski-bot-connector-for-telegram' ) . ' ▶️',
 				'callback_data' => json_encode( [
 					'command'    => 'links',
 					'page'       => $page + 1,
@@ -67,14 +67,17 @@ class Core {
 
 
 	public static function set_current_user( $user_id ): void {
-		wp_set_current_user( $user_id );
-		//wp_set_auth_cookie( $user_id );
+		$user_id = absint( $user_id );
+		if ( ! get_userdata( $user_id ) ) {
+			return;
+		}
 
-		// Switch to user's locale and reload translations
+		wp_set_current_user( $user_id );
+
+		// Switch to user's locale; unload_textdomain clears the cache so WP auto-reloads on next __() call.
 		$current_lang = get_user_meta( $user_id, 'locale', true ) ?: 'en_US';
 		switch_to_locale( $current_lang );
-		unload_textdomain( 'tg-bot' );
-		load_plugin_textdomain( 'tg-bot', false, dirname( plugin_basename( TGBOT_PLUGIN_MAIN_FILE ) ) . '/languages/' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound
+		unload_textdomain( 'makarski-bot-connector-for-telegram' );
 	}
 
 
@@ -95,7 +98,7 @@ class Core {
 			$full_endpoint = get_home_url( null, $relative_url );
 
 			$bot = new BotApi( $token, false );
-			$bot->set_webhook( $full_endpoint );
+			$bot->set_webhook( $full_endpoint, tgbot_get_webhook_secret() );
 		} else {
 			error_log( '{error} There is no endpoint value when registration new TG Endpoint' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}

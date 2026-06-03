@@ -69,6 +69,7 @@ class BotApi {
 	}
 
 	private function set_last_received_text( $text ): void {
+		$text = sanitize_textarea_field( (string) $text );
 		if ( ! empty( $text ) && ! str_starts_with( $text, '/' ) ) {
 			$this->last_received_text = $text;
 		} else {
@@ -85,7 +86,7 @@ class BotApi {
 		$command = ltrim( $command, '/' );
 
 		if ( strlen( $command ) > 100 ) {
-			$this->send_message( __( 'Too long command', 'tg-bot' ) );
+			$this->send_message( __( 'Too long command', 'makarski-bot-connector-for-telegram' ) );
 		} else {
 			if ( method_exists( $this, 'command_' . $command ) ) {
 				call_user_func( array( $this, 'command_' . $command ) );
@@ -664,8 +665,12 @@ class BotApi {
 	 * @param string $url Full HTTPS URL for Telegram to deliver updates.
 	 * @return mixed
 	 */
-	public function set_webhook( $url ): mixed {
-		return $this->send_request( $this->api_url . 'setWebhook', array( 'url' => $url ) );
+	public function set_webhook( string $url, string $secret_token = '' ): mixed {
+		$params = array( 'url' => $url );
+		if ( $secret_token ) {
+			$params['secret_token'] = $secret_token;
+		}
+		return $this->send_request( $this->api_url . 'setWebhook', $params );
 	}
 
 	/**
@@ -702,6 +707,14 @@ class BotApi {
 	 * @return object|false
 	 */
 	public function get_request(): object|false {
+		$secret = get_option( 'tgbot_webhook_secret', '' );
+		if ( $secret ) {
+			$received = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+			if ( ! hash_equals( $secret, $received ) ) {
+				return false;
+			}
+		}
+
 		$input = file_get_contents( 'php://input' );
 
 		if ( empty( $input ) ) {
@@ -746,7 +759,7 @@ class BotApi {
 		}
 
 		if ( $chat_id ) {
-			$this->chat_id = $chat_id;
+			$this->chat_id = (string) absint( $chat_id );
 		}
 	}
 
@@ -905,7 +918,7 @@ class BotApi {
 	public function get_document_url( object $message ): ?string {
 		$message = $message->message ?? $message;
 
-		if ( is_array( $message->photo ) && ! empty( $message->photo ) ) {
+		if ( isset( $message->photo ) && is_array( $message->photo ) && ! empty( $message->photo ) ) {
 			return $this->get_photo_url( $message );
 		}
 
@@ -914,7 +927,7 @@ class BotApi {
 
 		foreach ( $types as $type ) {
 			if ( isset( $message->$type ) ) {
-				$file_id = $message->$type->file_id;
+				$file_id = $message->$type->file_id ?? '';
 				break;
 			}
 		}
@@ -941,7 +954,7 @@ class BotApi {
 	public function get_photo_url( object $message ): ?string {
 		$message = $message->message ?? $message;
 
-		if ( ! is_array( $message->photo ) || empty( $message->photo ) ) {
+		if ( ! isset( $message->photo ) || ! is_array( $message->photo ) || empty( $message->photo ) ) {
 			return null;
 		}
 

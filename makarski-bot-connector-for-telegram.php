@@ -1,19 +1,19 @@
 <?php
 /**
- * Telegram Messenger Integration
+ * Makarski Bot Connector for Telegram
  *
  * @author        Dzmitry Makarski
- * @version       0.2.38
+ * @version       0.2.41
  *
  * @wordpress-plugin
- * Plugin Name:       Telegram Messenger Integration
+ * Plugin Name:       Makarski Bot Connector for Telegram
  * Description:       Allows you to manage your Telegram bot via WordPress
- * Version:           0.2.38
+ * Version:           0.2.41
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * License:           GPLv2
  * Author:            Dzmitry Makarski
- * Text Domain:       tg-bot
+ * Text Domain:       makarski-bot-connector-for-telegram
  * Domain Path:       /languages
  */
 

@@ -1,10 +1,10 @@
-=== Telegram Messenger Integration ===
-Contributors: mcarena77
+=== Makarski Bot Connector for Telegram ===
+Contributors: makaravich
 Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.38
+Stable tag: 0.2.41
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Connect WordPress to a Telegram bot. Handle messages, commands, payments and bui
 
 == Description ==
 
-**Telegram Messenger Integration** provides a clean foundation for building Telegram bots powered by WordPress. It handles all the low-level communication with the Telegram Bot API so you can focus on your bot's logic.
+**Makarski Bot Connector for Telegram** provides a clean foundation for building Telegram bots powered by WordPress. It handles all the low-level communication with the Telegram Bot API so you can focus on your bot's logic.
 
 = What it does =
 
@@ -109,7 +109,7 @@ Use `TGBot\register_bot_command()` inside an `init` hook:
 
 == Installation ==
 
-1. Upload the `tg-bot` folder to `/wp-content/plugins/`
+1. Upload the `makarski-bot-connector-for-telegram` folder to `/wp-content/plugins/`
 2. Activate the plugin via **Plugins** in WordPress admin
 3. Go to **Settings → Telegram settings**
 4. Enter your bot token (get one from [@BotFather](https://t.me/BotFather))
@@ -146,6 +146,15 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 
 == Changelog ==
 
+= 0.2.41 =
+* Renamed plugin folder and main file to match the approved WordPress.org slug `makarski-bot-connector-for-telegram`
+
+= 0.2.40 =
+* Webhook secret token support (`X-Telegram-Bot-Api-Secret-Token` header validation)
+* Input sanitization improvements: `absint()` for chat_id, `sanitize_textarea_field()` for text in BotApi
+* `Core::set_current_user()` hardened with `get_userdata()` check and `absint()`
+* Added `== External Services ==` section to readme.txt
+
 = 0.2.30 =
 * Renamed `tgbot_process_multimedia_message` to `tgbot_message`; added deprecated alias for backward compatibility
 * Added `tgbot_raw_message` hook for advanced use cases
@@ -179,6 +188,23 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 
 = 0.1.0 – 0.2.16 =
 * Initial implementation: webhook management, polling mode, user auto-creation, Stars payments, command routing, internationalization
+
+== External Services ==
+
+This plugin communicates with the **Telegram Bot API** (api.telegram.org) to operate a Telegram bot connected to your WordPress site.
+
+**What the service is:** Telegram Bot API is a third-party service by Telegram FZ-LLC that allows applications to send and receive messages through Telegram bots.
+
+**What data is sent and when:**
+* Bot token — sent with every API request to authenticate the bot.
+* Chat ID — sent when delivering messages to a specific user.
+* Message text and media files — sent when the bot responds to users.
+* Incoming updates (messages, commands, files) — received from Telegram via webhook (HTTP POST from Telegram to your site) or polling (your site requests updates from Telegram periodically via WP-Cron).
+
+No data is sent to Telegram unless the bot is enabled and a valid token is configured.
+
+**Telegram Privacy Policy:** https://telegram.org/privacy
+**Telegram Terms of Service:** https://telegram.org/tos
 
 == Upgrade Notice ==
 

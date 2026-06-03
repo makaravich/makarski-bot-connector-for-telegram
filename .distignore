@@ -1,6 +1,7 @@
 .git
 .gitignore
 .distignore
+WORKLOG.md
 watcher/
 admin/styles/admin.scss
 admin/styles/admin.css.map
