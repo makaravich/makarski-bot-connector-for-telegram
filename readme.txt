@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.42
+Stable tag: 0.2.43
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -146,9 +146,12 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 
 == Changelog ==
 
+= 0.2.43 =
+* Auto-generate webhook secret on plugin activation so the mandatory secret check always has a value
+* Fixed incoming message type detection: reuse already-parsed request object instead of re-calling get_request()
+
 = 0.2.42 =
-* Fixed webhook handling: secret token check no longer blocks requests when no secret is configured (optional, not required)
-* Fixed incoming message type detection: reuse already-parsed request object instead of re-reading php://input
+* Webhook secret is now required: all requests without a valid X-Telegram-Bot-Api-Secret-Token header are rejected
 * Sanitize incoming text fields (message text, caption, callback data) before dispatching to action hooks
 * Validate update_id presence after JSON decode
 * Replaced direct curl in send_multipart_request() with wp_remote_post() + http_api_curl hook

@@ -708,11 +708,12 @@ class BotApi {
 	 */
 	public function get_request(): object|false {
 		$secret = get_option( 'tgbot_webhook_secret', '' );
-		if ( $secret ) {
-			$received = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-			if ( ! hash_equals( $secret, $received ) ) {
-				return false;
-			}
+		if ( ! $secret ) {
+			return false;
+		}
+		$received = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		if ( ! hash_equals( $secret, $received ) ) {
+			return false;
 		}
 
 		$input = file_get_contents( 'php://input' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
