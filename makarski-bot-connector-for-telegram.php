@@ -3,12 +3,12 @@
  * Makarski Bot Connector for Telegram
  *
  * @author        Dzmitry Makarski
- * @version       0.2.41
+ * @version       0.2.42
  *
  * @wordpress-plugin
  * Plugin Name:       Makarski Bot Connector for Telegram
  * Description:       Allows you to manage your Telegram bot via WordPress
- * Version:           0.2.41
+ * Version:           0.2.42
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * License:           GPLv2

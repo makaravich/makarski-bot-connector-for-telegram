@@ -715,13 +715,28 @@ class BotApi {
 			}
 		}
 
-		$input = file_get_contents( 'php://input' );
+		$input = file_get_contents( 'php://input' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 
 		if ( empty( $input ) ) {
 			return false;
 		}
 
 		$this->request_respond = json_decode( $input );
+
+		if ( ! is_object( $this->request_respond ) || ! isset( $this->request_respond->update_id ) ) {
+			return false;
+		}
+
+		// Sanitize end-user text fields before they are exposed via action hooks.
+		if ( isset( $this->request_respond->message->text ) ) {
+			$this->request_respond->message->text = sanitize_textarea_field( $this->request_respond->message->text );
+		}
+		if ( isset( $this->request_respond->message->caption ) ) {
+			$this->request_respond->message->caption = sanitize_textarea_field( $this->request_respond->message->caption );
+		}
+		if ( isset( $this->request_respond->callback_query->data ) ) {
+			$this->request_respond->callback_query->data = sanitize_text_field( $this->request_respond->callback_query->data );
+		}
 
 		$this->update_chat_id();
 
@@ -817,26 +832,39 @@ class BotApi {
 	}
 
 	/**
-	 * Send a multipart/form-data request via curl.
-	 * Used only for file uploads (send_photo, send_document) where CURLFile is required.
-	 * wp_remote_post() does not support CURLFile/multipart uploads natively.
+	 * Send a multipart/form-data request for file uploads (send_photo, send_document, etc.).
+	 * Uses wp_remote_post() with the http_api_curl hook to inject CURLFile data,
+	 * as permitted by https://developer.wordpress.org/reference/hooks/http_api_curl/.
 	 *
 	 * @param string $url  Full API endpoint URL.
 	 * @param array  $data Request parameters including CURLFile objects.
 	 * @return mixed Decoded response object.
 	 */
 	private function send_multipart_request( string $url, array $data ): mixed {
-		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_close
-		$ch = curl_init();
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $data );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		$multipart_data = $data;
 
-		$response = curl_exec( $ch );
-		// phpcs:enable
+		$inject_multipart = function ( $handle ) use ( $multipart_data ) {
+			curl_setopt( $handle, CURLOPT_POSTFIELDS, $multipart_data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt
+		};
 
-		$this->last_request_response = json_decode( $response );
+		add_action( 'http_api_curl', $inject_multipart );
+
+		$response = wp_remote_post( $url, array( 'timeout' => 30 ) );
+
+		remove_action( 'http_api_curl', $inject_multipart );
+
+		if ( is_wp_error( $response ) ) {
+			error_log( '[TGBot ERROR] ' . $response->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			return (object) array( 'ok' => false, 'description' => $response->get_error_message() );
+		}
+
+		$body                        = wp_remote_retrieve_body( $response );
+		$this->last_request_response = json_decode( $body );
+
+		if ( empty( $this->last_request_response ) ) {
+			$this->last_request_response = (object) array( 'ok' => false, 'description' => 'Invalid JSON response' );
+			return $this->last_request_response;
+		}
 
 		if ( ! $this->last_request_response->ok ) {
 			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

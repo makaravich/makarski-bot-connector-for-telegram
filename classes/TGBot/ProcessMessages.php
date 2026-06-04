@@ -75,7 +75,7 @@ class ProcessMessages {
 
                 $bot->run_command($command);
             } else {
-                $message_array = $bot->get_request();
+                $message_array = $bot->request_respond;
 
                 $message = self::process_message($bot, $user_id, $message_array);
                 /*                if ($message['message']) {

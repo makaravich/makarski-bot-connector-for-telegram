@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.41
+Stable tag: 0.2.42
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -145,6 +145,13 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 2. Users list — Telegram Nickname column added automatically for linked users
 
 == Changelog ==
+
+= 0.2.42 =
+* Fixed webhook handling: secret token check no longer blocks requests when no secret is configured (optional, not required)
+* Fixed incoming message type detection: reuse already-parsed request object instead of re-reading php://input
+* Sanitize incoming text fields (message text, caption, callback data) before dispatching to action hooks
+* Validate update_id presence after JSON decode
+* Replaced direct curl in send_multipart_request() with wp_remote_post() + http_api_curl hook
 
 = 0.2.41 =
 * Renamed plugin folder and main file to match the approved WordPress.org slug `makarski-bot-connector-for-telegram`
