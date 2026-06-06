@@ -73,12 +73,6 @@ class Init {
 
         // Broadcast page hook: WP derives it from sanitized menu title, use str_ends_with to be safe.
         if ( str_ends_with( $hook, '_page_tgbot_broadcast' ) ) {
-            wp_enqueue_style(
-                'tgbot-broadcast-style',
-                TGBOT_PLUGIN_BASEURI . '/admin/styles/broadcast.css',
-                [],
-                filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/styles/broadcast.css' )
-            );
             wp_enqueue_script(
                 'tgbot-broadcast-script',
                 TGBOT_PLUGIN_BASEURI . '/admin/js/broadcast.js',
