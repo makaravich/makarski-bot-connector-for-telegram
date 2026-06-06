@@ -2,7 +2,7 @@
 
 WordPress plugin that connects your site to a Telegram bot. Handles all Telegram Bot API communication so you can focus on your bot's logic using familiar WordPress hooks and filters.
 
-**Version:** 0.2.35 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
+**Version:** 0.3.0 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
 
 ---
 
@@ -11,6 +11,7 @@ WordPress plugin that connects your site to a Telegram bot. Handles all Telegram
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Connection Modes](#connection-modes)
+- [Broadcast](#broadcast)
 - [Registering Commands](#registering-commands)
 - [Action Hooks](#action-hooks)
 - [Message Object](#message-object)
@@ -23,7 +24,7 @@ WordPress plugin that connects your site to a Telegram bot. Handles all Telegram
 
 1. Upload the `makarski-bot-connector-for-telegram` folder to `wp-content/plugins/`
 2. Activate via **Plugins → Installed Plugins**
-3. Go to **Settings → Telegram settings**
+3. Go to **Telegram Bot → Settings**
 4. Paste your bot token (from [@BotFather](https://t.me/BotFather)) and click **Save**
 5. Choose [connection mode](#connection-modes) and configure it
 
@@ -70,6 +71,31 @@ Your site pulls updates from Telegram via WP-Cron. Works on **any hosting includ
 3. WP-Cron will start fetching updates on the next page load
 
 > **Shared hosting tip:** If WP-Cron has issues, add `define('ALTERNATE_WP_CRON', true)` to `wp-config.php`.
+
+---
+
+## Broadcast
+
+The **Broadcast** page (**Telegram Bot → Broadcast**) lets site administrators send messages to WordPress users who have a Telegram username configured.
+
+### Features
+
+- **Recipient selection** — filter users by language, select all or individual recipients, see live selected count
+- **Per-locale messages** — compose separate message texts for each language present in your user base
+- **Format** — choose Plain text, HTML, or MarkdownV2 per broadcast
+- **Batched delivery** — processed via WP-Cron in batches of 200 at ~20 msg/sec (within Telegram's 30/sec limit); safe for large user bases without blocking the site
+- **Progress tracking** — real-time progress bar with sent/failed counts and estimated time remaining
+- **History** — full broadcast history on the Broadcast page; per-user history visible on each user's profile page
+
+### How to send a broadcast
+
+1. Go to **Telegram Bot → Broadcast**
+2. Optionally filter the list by language, then select recipients
+3. Click **Send Broadcast** — a confirmation modal opens with one textarea per language
+4. Enter your messages, choose a format, and confirm
+5. The job is queued and processed in the background; the page shows progress automatically
+
+> Only users with a Telegram username saved in their WordPress profile appear as recipients.
 
 ---
 
@@ -256,6 +282,7 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 | Method | Description |
 |---|---|
 | `send_message( $text, $chat_id?, $reply_markup? )` | Send HTML text message |
+| `send_plain_message( $text, $chat_id? )` | Send plain text message (no parse_mode) |
 | `send_markdown_message( $text, $chat_id?, $reply_markup? )` | Send MarkdownV2 message |
 | `send_chat_action( $action, $chat_id? )` | Show typing/upload indicator. Actions: `typing`, `upload_photo`, `record_voice`, `upload_voice`, `upload_document`, `find_location` |
 
@@ -360,3 +387,14 @@ Or set up a real system cron:
 ## Changelog
 
 See [readme.txt](readme.txt) for full changelog.
+
+### 0.3.0
+
+- New **Broadcast** feature: send mass messages to bot users from a dedicated admin page (**Telegram Bot → Broadcast**)
+- Per-locale message composition — separate texts for each language in your user base
+- Format selector: Plain, HTML, or MarkdownV2
+- Cron-batched delivery (200 messages/batch, ~20 msg/sec) — safe for large user bases
+- Real-time progress bar with sent/failed counts and estimated completion time
+- Broadcast history on the admin page; per-user history on the user profile
+- New top-level **Telegram Bot** admin menu with Settings and Broadcast subpages
+- New `BotApi::send_plain_message()` — send a message without any parse_mode
