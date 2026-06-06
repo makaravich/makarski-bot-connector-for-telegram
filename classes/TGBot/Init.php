@@ -31,6 +31,8 @@ class Init {
         add_action('edit_user_profile_update', [$this, 'save_tg_nickname_field']);
         add_action('show_user_profile', [$this, 'add_tg_nickname_field']);
         add_action('edit_user_profile', [$this, 'add_tg_nickname_field']);
+        add_action('show_user_profile', [$this, 'add_tg_broadcast_history']);
+        add_action('edit_user_profile', [$this, 'add_tg_broadcast_history']);
         add_filter('manage_users_columns', [$this, 'add_tg_nickname_column']);
         add_filter('manage_users_custom_column', [$this, 'show_tg_nickname_column'], 10, 3);
         add_filter('manage_users_sortable_columns', [$this, 'make_tg_nickname_sortable']);
@@ -239,6 +241,48 @@ class Init {
                     <p class="description"><?php esc_html_e( 'Enter your nick in Telegram (without @)', 'makarski-bot-connector-for-telegram' ); ?></p>
                 </td>
             </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Show broadcast history on user profile page.
+     *
+     * @param \WP_User $user
+     */
+    function add_tg_broadcast_history( \WP_User $user ): void {
+        $history = \TGBot\Broadcast::get_recipient_history( $user->ID, 20 );
+
+        if ( empty( $history ) ) {
+            return;
+        }
+        ?>
+        <h3><?php esc_html_e( 'Telegram Broadcast History', 'makarski-bot-connector-for-telegram' ); ?></h3>
+        <table class="wp-list-table widefat striped" style="max-width:900px;">
+            <thead>
+                <tr>
+                    <th><?php esc_html_e( 'Date', 'makarski-bot-connector-for-telegram' ); ?></th>
+                    <th><?php esc_html_e( 'Status', 'makarski-bot-connector-for-telegram' ); ?></th>
+                    <th><?php esc_html_e( 'Message', 'makarski-bot-connector-for-telegram' ); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ( $history as $row ) :
+                    $msgs    = json_decode( $row->messages_json, true );
+                    $locale  = get_user_meta( $user->ID, 'locale', true ) ?: 'en_US';
+                    $text    = $msgs[ $locale ] ?? $msgs['en_US'] ?? reset( $msgs ) ?? '';
+                    $preview = mb_substr( $text, 0, 120 );
+                    if ( mb_strlen( $text ) > 120 ) {
+                        $preview .= '…';
+                    }
+                ?>
+                <tr>
+                    <td style="white-space:nowrap;"><?php echo esc_html( $row->sent_at ?: $row->job_created ); ?></td>
+                    <td><span class="tgbot-status-badge tgbot-status-<?php echo esc_attr( $row->status ); ?>"><?php echo esc_html( $row->status ); ?></span></td>
+                    <td><?php echo esc_html( $preview ); ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
         </table>
         <?php
     }
