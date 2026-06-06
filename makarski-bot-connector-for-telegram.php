@@ -56,9 +56,6 @@ require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_options.php';
 // Plugin Functions
 require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_functions.php';
 
-// Broadcast
-require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_broadcast.php';
-
 // Activation: ensure webhook secret exists in DB; create broadcast tables
 register_activation_hook( __FILE__, function () {
 	tgbot_get_webhook_secret();
