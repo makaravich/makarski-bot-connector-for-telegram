@@ -23,6 +23,7 @@ class Init {
         add_action('init', function () {
             \TGBot\ProcessMessages::init();
             \TGBot\Polling::init();
+            \TGBot\Broadcast::init();
         }, 999);
 
         // User custom fields
@@ -54,10 +55,11 @@ class Init {
      *
      * @return void
      */
-    public function add_admin_assets($hook): void {
+    public function add_admin_assets( $hook ): void {
         wp_enqueue_style( 'tgbot-admin-style', TGBOT_PLUGIN_BASEURI . '/admin/styles/admin.min.css', [], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/styles/admin.min.css' ) );
 
-        $js_hooks = [ 'edit.php', 'settings_page_tgbot_options-options' ];
+        // Settings page hook changed from settings_page_ to toplevel_page_ after menu refactor.
+        $js_hooks = [ 'edit.php', 'toplevel_page_tgbot_options-options' ];
         if ( in_array( $hook, $js_hooks, true ) ) {
             wp_enqueue_script( 'tgbot-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [ 'jquery' ], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js' ), true );
             wp_localize_script( 'tgbot-admin-script', 'tgbotAdmin', [
@@ -67,6 +69,66 @@ class Init {
                 'endpoint'      => tgbot_get_option( 'gen_tg_endpoint' ) ?? '',
                 'labelDisabled' => __( 'Disabled', 'makarski-bot-connector-for-telegram' ),
             ] );
+        }
+
+        // Broadcast page: hook is tgbot_options-options_page_tgbot_broadcast
+        $broadcast_hook = 'tgbot_options-options_page_tgbot_broadcast';
+        if ( $hook === $broadcast_hook ) {
+            wp_enqueue_style(
+                'tgbot-broadcast-style',
+                TGBOT_PLUGIN_BASEURI . '/admin/styles/broadcast.css',
+                [],
+                filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/styles/broadcast.css' )
+            );
+            wp_enqueue_script(
+                'tgbot-broadcast-script',
+                TGBOT_PLUGIN_BASEURI . '/admin/js/broadcast.js',
+                [ 'jquery' ],
+                filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/broadcast.js' ),
+                true
+            );
+
+            // Detect any active job to resume polling on page load.
+            $active_jobs = \TGBot\Broadcast::get_history( 10 );
+            $active_job_id = 0;
+            foreach ( $active_jobs as $j ) {
+                if ( in_array( $j->status, [ 'pending', 'running' ], true ) ) {
+                    $active_job_id = (int) $j->id;
+                    break;
+                }
+            }
+
+            wp_localize_script(
+                'tgbot-broadcast-script',
+                'tgbotBroadcast',
+                [
+                    'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+                    'nonce'       => wp_create_nonce( 'tgbot_broadcast' ),
+                    'activeJobId' => $active_job_id,
+                    'i18n'        => [
+                        'sending'           => __( 'Sending…', 'makarski-bot-connector-for-telegram' ),
+                        'send'              => __( 'Send', 'makarski-bot-connector-for-telegram' ),
+                        'cancel'            => __( 'Cancel', 'makarski-bot-connector-for-telegram' ),
+                        'error'             => __( 'An error occurred. Please try again.', 'makarski-bot-connector-for-telegram' ),
+                        'noMessage'         => __( 'Please enter at least one message.', 'makarski-bot-connector-for-telegram' ),
+                        'format'            => __( 'Format', 'makarski-bot-connector-for-telegram' ),
+                        'fmtPlain'          => __( 'Plain', 'makarski-bot-connector-for-telegram' ),
+                        'fmtHtml'           => __( 'HTML', 'makarski-bot-connector-for-telegram' ),
+                        'fmtMarkdown'       => __( 'Markdown', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %d: number of selected users */
+                        'selected'          => __( 'Selected: %d', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %d: number of selected users */
+                        'sendBtn'           => __( 'Send Broadcast (%d)', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %d: number of recipients */
+                        'modalTitle'        => __( 'Broadcast to %d users', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %s: locale code */
+                        'localeLabel'       => __( 'Message for locale: %s', 'makarski-bot-connector-for-telegram' ),
+                        'messagePlaceholder' => __( 'Enter your message…', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %sent: sent count, %total: total, %failed: failed count, %min: minutes */
+                        'progressText'      => __( '%sent / %total sent · %failed failed · ~%min min remaining', 'makarski-bot-connector-for-telegram' ),
+                    ],
+                ]
+            );
         }
     }
 
