@@ -13,6 +13,8 @@ class Broadcast {
 
 	const CRON_HOOK  = 'tgbot_process_broadcast';
 	const BATCH_SIZE = 200;
+	const DB_VERSION = '1.0';
+	const DB_VERSION_OPTION = 'tgbot_broadcast_db_version';
 
 	// ---------------------------------------------------------------------------
 	// Table names
@@ -73,6 +75,18 @@ class Broadcast {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+
+	/**
+	 * Run create_tables() only when the stored DB version doesn't match.
+	 * Safe to call on every plugins_loaded — skips the work when up to date.
+	 */
+	public static function maybe_upgrade_db(): void {
+		if ( get_option( self::DB_VERSION_OPTION ) === self::DB_VERSION ) {
+			return;
+		}
+		self::create_tables();
+		update_option( self::DB_VERSION_OPTION, self::DB_VERSION, false );
 	}
 
 	// ---------------------------------------------------------------------------

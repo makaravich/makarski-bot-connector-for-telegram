@@ -62,7 +62,13 @@ require_once TGBOT_PLUGIN_BASEPATH . '/inc/tgbot_broadcast.php';
 // Activation: ensure webhook secret exists in DB; create broadcast tables
 register_activation_hook( __FILE__, function () {
 	tgbot_get_webhook_secret();
-	\TGBot\Broadcast::create_tables();
+	\TGBot\Broadcast::maybe_upgrade_db();
+} );
+
+// On every load: silently create/upgrade DB tables if version changed.
+// Handles plugin updates without requiring deactivation/reactivation.
+add_action( 'plugins_loaded', function () {
+	\TGBot\Broadcast::maybe_upgrade_db();
 } );
 
 // Deactivation: stop polling cron
