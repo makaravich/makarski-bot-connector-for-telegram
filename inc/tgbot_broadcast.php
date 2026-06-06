@@ -232,7 +232,7 @@ function tgbot_broadcast_page_output(): void {
 			<table class="wp-list-table widefat striped tgbot-user-table" id="tgbot-user-table">
 				<thead>
 					<tr>
-						<th class="check-column"><input type="checkbox" id="tgbot-check-all" /></th>
+						<td class="manage-column column-cb check-column"><input type="checkbox" id="tgbot-check-all" /></td>
 						<th><?php esc_html_e( 'Display Name', 'makarski-bot-connector-for-telegram' ); ?></th>
 						<th><?php esc_html_e( 'Telegram Username', 'makarski-bot-connector-for-telegram' ); ?></th>
 						<th class="column-lang"><?php esc_html_e( 'Language', 'makarski-bot-connector-for-telegram' ); ?></th>
