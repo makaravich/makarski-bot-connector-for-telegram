@@ -71,9 +71,8 @@ class Init {
             ] );
         }
 
-        // Broadcast page: hook is tgbot_options-options_page_tgbot_broadcast
-        $broadcast_hook = 'tgbot_options-options_page_tgbot_broadcast';
-        if ( $hook === $broadcast_hook ) {
+        // Broadcast page hook: WP derives it from sanitized menu title, use str_ends_with to be safe.
+        if ( str_ends_with( $hook, '_page_tgbot_broadcast' ) ) {
             wp_enqueue_style(
                 'tgbot-broadcast-style',
                 TGBOT_PLUGIN_BASEURI . '/admin/styles/broadcast.css',

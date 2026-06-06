@@ -136,6 +136,15 @@
 	vertical-align: middle;
 }
 
+.tgbot-user-table .check-column {
+	width:   38px !important;
+	padding: 8px 4px 8px 8px !important;
+}
+
+.tgbot-user-table .column-lang {
+	width: 180px;
+}
+
 /* Broadcast compose section */
 .tgbot-broadcast-compose {
 	margin-top: 16px;

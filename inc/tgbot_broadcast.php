@@ -229,13 +229,13 @@ function tgbot_broadcast_page_output(): void {
 				</span>
 			</p>
 
-			<table class="wp-list-table widefat fixed striped tgbot-user-table" id="tgbot-user-table">
+			<table class="wp-list-table widefat striped tgbot-user-table" id="tgbot-user-table">
 				<thead>
 					<tr>
 						<th class="check-column"><input type="checkbox" id="tgbot-check-all" /></th>
 						<th><?php esc_html_e( 'Display Name', 'makarski-bot-connector-for-telegram' ); ?></th>
 						<th><?php esc_html_e( 'Telegram Username', 'makarski-bot-connector-for-telegram' ); ?></th>
-						<th><?php esc_html_e( 'Language', 'makarski-bot-connector-for-telegram' ); ?></th>
+						<th class="column-lang"><?php esc_html_e( 'Language', 'makarski-bot-connector-for-telegram' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -254,7 +254,7 @@ function tgbot_broadcast_page_output(): void {
 						</td>
 						<td><?php echo esc_html( $user->display_name ); ?></td>
 						<td>@<?php echo esc_html( $tg_nick ); ?></td>
-						<td><?php echo wp_kses_post( tgbot_locale_label( $locale ) ); ?></td>
+						<td class="column-lang"><?php echo wp_kses_post( tgbot_locale_label( $locale ) ); ?></td>
 					</tr>
 					<?php endforeach; ?>
 				</tbody>
