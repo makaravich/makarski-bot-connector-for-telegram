@@ -121,7 +121,7 @@ class Init {
                         'localeLabel'       => __( 'Message for locale: %s', 'makarski-bot-connector-for-telegram' ),
                         'messagePlaceholder' => __( 'Enter your message…', 'makarski-bot-connector-for-telegram' ),
                         /* translators: %sent: sent count, %total: total, %failed: failed count, %min: minutes */
-                        'progressText'      => __( '%sent / %total sent · %failed failed · ~%min min remaining', 'makarski-bot-connector-for-telegram' ),
+                        'progressText'      => __( '%sent / %total sent · %failed failed · ~%min min remaining', 'makarski-bot-connector-for-telegram' ), // phpcs:ignore WordPress.WP.I18n.UnorderedPlaceholdersText -- custom JS replacement markers, not PHP printf placeholders
                     ],
                 ]
             );

@@ -28,7 +28,7 @@ class AdminBroadcast {
 			wp_send_json_error( [ 'message' => __( 'Forbidden', 'makarski-bot-connector-for-telegram' ) ], 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via array_map( 'absint' ) on the next line
 		$raw_ids  = isset( $_POST['user_ids'] ) ? (array) wp_unslash( $_POST['user_ids'] ) : [];
 		$user_ids = array_map( 'absint', $raw_ids );
 		$user_ids = array_filter( $user_ids );
@@ -37,7 +37,7 @@ class AdminBroadcast {
 			wp_send_json_error( [ 'message' => __( 'No users selected.', 'makarski-bot-connector-for-telegram' ) ] );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via sanitize_text_field/sanitize_textarea_field in the loop below
 		$raw_messages = isset( $_POST['messages'] ) ? (array) wp_unslash( $_POST['messages'] ) : [];
 		$messages     = [];
 		foreach ( $raw_messages as $locale => $text ) {
@@ -132,9 +132,9 @@ class AdminBroadcast {
 
 		$bot_users = get_users(
 			[
-				'meta_key'     => 'tg_nickname',
+				'meta_key'     => 'tg_nickname', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'meta_compare' => '!=',
-				'meta_value'   => '',
+				'meta_value'   => '', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				'number'       => -1,
 			]
 		);

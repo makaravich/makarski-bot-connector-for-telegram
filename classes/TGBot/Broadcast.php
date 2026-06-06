@@ -23,13 +23,13 @@ class Broadcast {
 	/** @return string */
 	public static function jobs_table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'tgbot_broadcasts'; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		return $wpdb->prefix . 'tgbot_broadcasts';
 	}
 
 	/** @return string */
 	public static function recipients_table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'tgbot_broadcast_recipients'; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		return $wpdb->prefix . 'tgbot_broadcast_recipients';
 	}
 
 	// ---------------------------------------------------------------------------
@@ -168,19 +168,19 @@ class Broadcast {
 		$job_id = (int) $wpdb->insert_id;
 
 		// Bulk-insert recipients.
-		$values      = [];
+		$values       = [];
 		$placeholders = [];
 		foreach ( $recipients as $r ) {
 			$placeholders[] = '(%d, %d, %s, %s, %s, %s)';
 			array_push( $values, $job_id, $r['user_id'], $r['chat_id'], $r['locale'], 'pending', null );
 		}
 
-		$recipients_table = self::recipients_table();
-		$sql              = 'INSERT INTO ' . $recipients_table . // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$recipients_table = esc_sql( self::recipients_table() );
+		$sql              = 'INSERT INTO `' . $recipients_table . '`' . // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			' (broadcast_id, user_id, chat_id, locale, status, sent_at)' .
 			' VALUES ' . implode( ', ', $placeholders ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$wpdb->query( $wpdb->prepare( $sql, $values ) );
 
 		// Schedule cron batch if not already scheduled.
@@ -213,16 +213,18 @@ class Broadcast {
 		$bot = new BotApi( $token, false );
 
 		// Fetch a batch of pending recipients whose job is active.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT r.id, r.broadcast_id, r.chat_id, r.locale,
 				        j.messages_json, j.format
-				 FROM {$recipients_table} r
-				 INNER JOIN {$jobs_table} j ON j.id = r.broadcast_id
+				 FROM %i r
+				 INNER JOIN %i j ON j.id = r.broadcast_id
 				 WHERE r.status = %s
 				   AND j.status IN ('pending','running')
 				 LIMIT %d",
+				$recipients_table,
+				$jobs_table,
 				'pending',
 				self::BATCH_SIZE
 			)
@@ -236,10 +238,11 @@ class Broadcast {
 		// Mark jobs as running.
 		$job_ids = array_unique( array_column( $rows, 'broadcast_id' ) );
 		foreach ( $job_ids as $jid ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$jobs_table} SET status = 'running' WHERE id = %d AND status = 'pending'",
+					"UPDATE %i SET status = 'running' WHERE id = %d AND status = 'pending'",
+					$jobs_table,
 					(int) $jid
 				)
 			);
@@ -260,10 +263,11 @@ class Broadcast {
 
 			if ( '' === $text ) {
 				// No message — mark failed.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query(
 					$wpdb->prepare(
-						"UPDATE {$recipients_table} SET status = 'failed', error = %s WHERE id = %d",
+						"UPDATE %i SET status = 'failed', error = %s WHERE id = %d",
+						$recipients_table,
 						'No message for locale',
 						(int) $row->id
 					)
@@ -286,10 +290,11 @@ class Broadcast {
 			}
 
 			if ( ! empty( $result->ok ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query(
 					$wpdb->prepare(
-						"UPDATE {$recipients_table} SET status = 'sent', sent_at = %s WHERE id = %d",
+						"UPDATE %i SET status = 'sent', sent_at = %s WHERE id = %d",
+						$recipients_table,
 						current_time( 'mysql' ),
 						(int) $row->id
 					)
@@ -297,10 +302,11 @@ class Broadcast {
 				$sent_counts[ $row->broadcast_id ]++;
 			} else {
 				$error_msg = $result->description ?? 'Unknown error';
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query(
 					$wpdb->prepare(
-						"UPDATE {$recipients_table} SET status = 'failed', error = %s WHERE id = %d",
+						"UPDATE %i SET status = 'failed', error = %s WHERE id = %d",
+						$recipients_table,
 						$error_msg,
 						(int) $row->id
 					)
@@ -315,13 +321,14 @@ class Broadcast {
 		// Update job counters.
 		foreach ( $job_ids as $jid ) {
 			if ( $sent_counts[ $jid ] > 0 || $failed_counts[ $jid ] > 0 ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query(
 					$wpdb->prepare(
-						"UPDATE {$jobs_table}
+						"UPDATE %i
 						 SET sent   = sent   + %d,
 						     failed = failed + %d
 						 WHERE id = %d",
+						$jobs_table,
 						$sent_counts[ $jid ],
 						$failed_counts[ $jid ],
 						(int) $jid
@@ -334,12 +341,14 @@ class Broadcast {
 		self::finalize_jobs();
 
 		// Chain next batch if pending recipients remain.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$remaining = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$recipients_table} r
-				 INNER JOIN {$jobs_table} j ON j.id = r.broadcast_id
+				"SELECT COUNT(*) FROM %i r
+				 INNER JOIN %i j ON j.id = r.broadcast_id
 				 WHERE r.status = %s AND j.status IN ('pending','running')",
+				$recipients_table,
+				$jobs_table,
 				'pending'
 			)
 		);
@@ -359,16 +368,20 @@ class Broadcast {
 		$recipients_table = self::recipients_table();
 
 		// Jobs with no pending recipients left.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$running_jobs = $wpdb->get_results(
-			"SELECT id, total, sent, failed FROM {$jobs_table} WHERE status = 'running'"
+			$wpdb->prepare(
+				"SELECT id, total, sent, failed FROM %i WHERE status = 'running'",
+				$jobs_table
+			)
 		);
 
 		foreach ( $running_jobs as $job ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$pending_count = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$recipients_table} WHERE broadcast_id = %d AND status = 'pending'",
+					"SELECT COUNT(*) FROM %i WHERE broadcast_id = %d AND status = 'pending'",
+					$recipients_table,
 					(int) $job->id
 				)
 			);
@@ -389,10 +402,11 @@ class Broadcast {
 				$final_status = 'partial';
 			}
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$jobs_table} SET status = %s WHERE id = %d",
+					"UPDATE %i SET status = %s WHERE id = %d",
+					$jobs_table,
 					$final_status,
 					(int) $job->id
 				)
@@ -415,10 +429,11 @@ class Broadcast {
 
 		$jobs_table = self::jobs_table();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$job = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT id, status, total, sent, failed FROM {$jobs_table} WHERE id = %d",
+				"SELECT id, status, total, sent, failed FROM %i WHERE id = %d",
+				$jobs_table,
 				$job_id
 			)
 		);
@@ -460,13 +475,14 @@ class Broadcast {
 
 		$jobs_table = self::jobs_table();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, created_at, messages_json, format, status, total, sent, failed
-				 FROM {$jobs_table}
+				 FROM %i
 				 ORDER BY created_at DESC
 				 LIMIT %d OFFSET %d",
+				$jobs_table,
 				$limit,
 				$offset
 			)
@@ -488,16 +504,18 @@ class Broadcast {
 		$jobs_table       = self::jobs_table();
 		$recipients_table = self::recipients_table();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT r.id, r.broadcast_id, r.status, r.sent_at, r.error,
 				        j.created_at, j.format, j.messages_json
-				 FROM {$recipients_table} r
-				 INNER JOIN {$jobs_table} j ON j.id = r.broadcast_id
+				 FROM %i r
+				 INNER JOIN %i j ON j.id = r.broadcast_id
 				 WHERE r.user_id = %d
 				 ORDER BY j.created_at DESC
 				 LIMIT %d",
+				$recipients_table,
+				$jobs_table,
 				$user_id,
 				$limit
 			)
