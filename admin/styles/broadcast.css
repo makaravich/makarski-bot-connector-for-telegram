@@ -148,6 +148,10 @@
 	border-right: none;
 }
 
+.tgbot-user-table .check-column input[type="checkbox"] {
+	margin: 0 0 0 8px;
+}
+
 .tgbot-user-table .column-lang {
 	width: 160px;
 }
