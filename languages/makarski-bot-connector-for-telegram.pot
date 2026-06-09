@@ -2,21 +2,21 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Makarski Bot Connector for Telegram 0.2.40\n"
+"Project-Id-Version: Makarski Bot Connector for Telegram 0.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/makarski-bot-connector-for-telegram\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-29T17:57:51+00:00\n"
+"POT-Creation-Date: 2026-06-09T17:39:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"X-Domain: tgbot\n"
+"X-Domain: makarski-bot-connector-for-telegram\n"
 
 #. Plugin Name of the plugin
 #: makarski-bot-connector-for-telegram.php
-msgid "Telegram Messenger Integration"
+msgid "Makarski Bot Connector for Telegram"
 msgstr ""
 
 #. Description of the plugin
@@ -29,76 +29,377 @@ msgstr ""
 msgid "Dzmitry Makarski"
 msgstr ""
 
-#: classes/Simple_Tg_Bot.php:104
-#: classes/TGBot/TGBot.php:12
+#: classes/TGBot/AdminBroadcast.php:16
+#: classes/TGBot/AdminBroadcast.php:17
+msgid "Broadcast"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:28
+#: classes/TGBot/AdminBroadcast.php:78
+#: inc/tgbot_options.php:351
+msgid "Forbidden"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:37
+msgid "No users selected."
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:49
+msgid "No message text provided."
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:61
+msgid "Failed to create broadcast job. Check that selected users have Telegram usernames."
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:84
+msgid "Missing job_id."
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:90
+msgid "Job not found."
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:153
+msgid "Telegram Broadcast"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:157
+#: classes/TGBot/Init.php:105
+msgid "Sending…"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:166
+msgid "Select Recipients"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:169
+msgid "No Telegram bot users found. Users need to have a Telegram username configured."
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:174
+msgid "Filter by language:"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:177
+msgid "All languages"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:187
+msgid "Select all"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:189
+msgid "Deselect all"
+msgstr ""
+
+#. translators: %d: number of selected users
+#: classes/TGBot/AdminBroadcast.php:195
+#: classes/TGBot/Init.php:115
+#, php-format
+msgid "Selected: %d"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:206
+msgid "Display Name"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:207
+msgid "Telegram Username"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:208
+msgid "Language"
+msgstr ""
+
+#. translators: %d: number of selected users
+#: classes/TGBot/AdminBroadcast.php:238
+#: classes/TGBot/Init.php:117
+#, php-format
+msgid "Send Broadcast (%d)"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:250
+msgid "Broadcast History"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:254
+#: classes/TGBot/Init.php:265
+msgid "Date"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:255
+msgid "Total"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:256
+msgid "Sent"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:257
+msgid "Failed"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:258
+#: classes/TGBot/Init.php:266
+msgid "Status"
+msgstr ""
+
+#: classes/TGBot/AdminBroadcast.php:259
+msgid "Message preview"
+msgstr ""
+
+#: classes/TGBot/Bot.php:11
+#: classes/TGBot/BotApi.php:89
 msgid "Too long command"
 msgstr ""
 
-#: classes/TGBot/Core.php:45
-msgid "Back"
-msgstr ""
-
-#: classes/TGBot/Core.php:57
-msgid "Next"
-msgstr ""
-
-#: classes/TGBot/Init.php:48
-msgid "This is an awesome Telegram bot! 😉"
-msgstr ""
-
-#: classes/TGBot/Init.php:172
-msgid "Enter your nick in Telegram (without @)"
-msgstr ""
-
-#: classes/TGBot/Init.php:187
-msgid "Telegram Nickname"
-msgstr ""
-
-#: classes/TGBot/ProcessMessages.php:33
-#: classes/TGBot/ProcessMessages.php:84
-msgid "Error"
-msgstr ""
-
-#: classes/TGBot/ProcessMessages.php:122
-msgid "The Chat ID is empty."
-msgstr ""
-
-#: classes/TGBot/ProcessMessages.php:163
-msgid "User already exists."
-msgstr ""
-
-#: classes/TGBot/TGBot.php:28
+#: classes/TGBot/Bot.php:26
 msgid "Unknown command: "
 msgstr ""
 
-#: classes/TGBot/TGBotCommands.php:12
+#: classes/TGBot/BotCommands.php:11
 msgid "Start command"
 msgstr ""
 
-#: inc/tgbot_options.php:27
+#: classes/TGBot/Core.php:43
+msgid "Back"
+msgstr ""
+
+#: classes/TGBot/Core.php:55
+msgid "Next"
+msgstr ""
+
+#: classes/TGBot/Init.php:49
+msgid "This is an awesome Telegram bot! 😉"
+msgstr ""
+
+#: classes/TGBot/Init.php:73
+#: inc/tgbot_options.php:292
+msgid "Disabled"
+msgstr ""
+
+#: classes/TGBot/Init.php:106
+msgid "Send"
+msgstr ""
+
+#: classes/TGBot/Init.php:107
+msgid "Cancel"
+msgstr ""
+
+#: classes/TGBot/Init.php:108
+msgid "An error occurred. Please try again."
+msgstr ""
+
+#: classes/TGBot/Init.php:109
+msgid "Please enter at least one message."
+msgstr ""
+
+#: classes/TGBot/Init.php:110
+msgid "Format"
+msgstr ""
+
+#: classes/TGBot/Init.php:111
+msgid "Plain"
+msgstr ""
+
+#: classes/TGBot/Init.php:112
+msgid "HTML"
+msgstr ""
+
+#: classes/TGBot/Init.php:113
+msgid "Markdown"
+msgstr ""
+
+#. translators: %d: number of recipients
+#: classes/TGBot/Init.php:119
+#, php-format
+msgid "Broadcast to %d users"
+msgstr ""
+
+#. translators: %s: locale code
+#: classes/TGBot/Init.php:121
+#, php-format
+msgid "Message for locale: %s"
+msgstr ""
+
+#: classes/TGBot/Init.php:122
+msgid "Enter your message…"
+msgstr ""
+
+#. translators: %sent: sent count, %total: total, %failed: failed count, %min: minutes
+#: classes/TGBot/Init.php:124
+#, php-format
+msgid "%sent / %total sent · %failed failed · ~%min min remaining"
+msgstr ""
+
+#: classes/TGBot/Init.php:242
+msgid "Enter your nick in Telegram (without @)"
+msgstr ""
+
+#: classes/TGBot/Init.php:261
+msgid "Telegram Broadcast History"
+msgstr ""
+
+#: classes/TGBot/Init.php:267
+msgid "Message"
+msgstr ""
+
+#: classes/TGBot/Init.php:299
+msgid "Telegram Nickname"
+msgstr ""
+
+#. translators: %d is the polling interval in seconds
+#: classes/TGBot/Polling.php:25
+#, php-format
+msgid "Every %d seconds"
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:33
+#: classes/TGBot/ProcessMessages.php:88
+msgid "Error"
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:126
+msgid "The Chat ID is empty."
+msgstr ""
+
+#: classes/TGBot/ProcessMessages.php:171
+msgid "User already exists."
+msgstr ""
+
+#: inc/tgbot_options.php:42
+#: inc/tgbot_options.php:43
+msgid "Telegram Bot"
+msgstr ""
+
+#: inc/tgbot_options.php:52
 msgid "Telegram Integration Options"
 msgstr ""
 
-#: inc/tgbot_options.php:28
-msgid "Telegram settings"
+#: inc/tgbot_options.php:53
+msgid "Settings"
 msgstr ""
 
-#: inc/tgbot_options.php:44
+#: inc/tgbot_options.php:70
+msgid "Bot status"
+msgstr ""
+
+#: inc/tgbot_options.php:77
+msgid "Enable bot"
+msgstr ""
+
+#: inc/tgbot_options.php:86
 msgid "Telegram options"
 msgstr ""
 
-#: inc/tgbot_options.php:51
+#: inc/tgbot_options.php:93
 msgid "Telegram Token"
 msgstr ""
 
-#: inc/tgbot_options.php:60
+#: inc/tgbot_options.php:102
 msgid "Telegram endpoint"
 msgstr ""
 
-#: inc/tgbot_options.php:69
-msgid "Automatically set the webhook when save"
+#: inc/tgbot_options.php:115
+msgid "Connection mode"
 msgstr ""
 
-#: inc/tgbot_options.php:85
+#: inc/tgbot_options.php:122
+msgid "Mode"
+msgstr ""
+
+#: inc/tgbot_options.php:130
+msgid "Polling interval (sec)"
+msgstr ""
+
+#: inc/tgbot_options.php:139
+#: inc/tgbot_options.php:249
+msgid "Webhook"
+msgstr ""
+
+#: inc/tgbot_options.php:148
+msgid "Webhook status"
+msgstr ""
+
+#: inc/tgbot_options.php:163
+msgid "👋 Quick start"
+msgstr ""
+
+#. translators: %s: link to BotFather
+#: inc/tgbot_options.php:167
+#, php-format
+msgid "Create a bot and copy its token from %s."
+msgstr ""
+
+#: inc/tgbot_options.php:170
+msgid "Paste the token into the \"Telegram Token\" field below and click Save."
+msgstr ""
+
+#: inc/tgbot_options.php:171
+msgid "Choose a connection mode:"
+msgstr ""
+
+#: inc/tgbot_options.php:173
+msgid "Webhook — requires a public HTTPS URL. After saving, click Set Webhook."
+msgstr ""
+
+#: inc/tgbot_options.php:174
+msgid "Polling — works on any hosting including localhost. Starts automatically on Save."
+msgstr ""
+
+#: inc/tgbot_options.php:185
 msgid "Save"
+msgstr ""
+
+#: inc/tgbot_options.php:215
+msgid "Show/hide token"
+msgstr ""
+
+#: inc/tgbot_options.php:230
+msgid "Set Webhook"
+msgstr ""
+
+#: inc/tgbot_options.php:233
+msgid "Check Status"
+msgstr ""
+
+#: inc/tgbot_options.php:236
+msgid "Delete Webhook"
+msgstr ""
+
+#: inc/tgbot_options.php:254
+msgid "Polling (getUpdates)"
+msgstr ""
+
+#: inc/tgbot_options.php:257
+msgid "Webhook requires a public HTTPS URL. Polling can work on localhost."
+msgstr ""
+
+#: inc/tgbot_options.php:267
+msgid "sec"
+msgstr ""
+
+#: inc/tgbot_options.php:269
+msgid "Minimum: 5 sec. Requires WP-Cron or system cron."
+msgstr ""
+
+#: inc/tgbot_options.php:292
+msgid "Active"
+msgstr ""
+
+#: inc/tgbot_options.php:358
+msgid "Telegram token is not configured."
+msgstr ""
+
+#: inc/tgbot_options.php:371
+msgid "Telegram endpoint is not configured."
+msgstr ""
+
+#: inc/tgbot_options.php:385
+msgid "No response from Telegram API."
+msgstr ""
+
+#: inc/tgbot_options.php:391
+msgid "Telegram API error."
 msgstr ""

@@ -38,14 +38,23 @@ add_action('add_option_tgbot_options', function( $option, $value ) { tgbot_optio
 add_action('wp_ajax_tgbot_webhook_action', 'tgbot_ajax_webhook_action');
 
 function tgbot_add_options_page(): void {
-    add_submenu_page(
-            'options-general.php',
-            __('Telegram Integration Options', 'makarski-bot-connector-for-telegram'),
-            __('Telegram settings', 'makarski-bot-connector-for-telegram'),
-            'manage_options',
-            'tgbot_options-options',
-            'tgbot_options_page_output'
-    );
+	add_menu_page(
+		__( 'Telegram Bot', 'makarski-bot-connector-for-telegram' ),
+		__( 'Telegram Bot', 'makarski-bot-connector-for-telegram' ),
+		'manage_options',
+		'tgbot_options-options',
+		'tgbot_options_page_output',
+		'dashicons-format-chat',
+		80
+	);
+	add_submenu_page(
+		'tgbot_options-options',
+		__( 'Telegram Integration Options', 'makarski-bot-connector-for-telegram' ),
+		__( 'Settings', 'makarski-bot-connector-for-telegram' ),
+		'manage_options',
+		'tgbot_options-options',
+		'tgbot_options_page_output'
+	);
 }
 
 function tgbot_register_settings(): void {

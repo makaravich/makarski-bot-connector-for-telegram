@@ -137,6 +137,27 @@ class BotApi {
 	}
 
 	/**
+	 * Send a plain-text message (no parse_mode — Telegram treats it as plain text).
+	 *
+	 * @param string $message  Message text.
+	 * @param string $chat_id  Target chat ID; defaults to current chat.
+	 * @return mixed
+	 */
+	public function send_plain_message( $message, string $chat_id = '' ): mixed {
+		if ( '' === $chat_id ) {
+			$chat_id = $this->chat_id;
+		}
+
+		return $this->send_request(
+			$this->api_url . 'sendMessage',
+			array(
+				'chat_id' => $chat_id,
+				'text'    => $message,
+			)
+		);
+	}
+
+	/**
 	 * Send a MarkdownV2-formatted message.
 	 *
 	 * @param string      $message      Message text (Markdown).

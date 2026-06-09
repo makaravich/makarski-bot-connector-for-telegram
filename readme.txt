@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.2.43
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,13 +26,14 @@ Connect WordPress to a Telegram bot. Handle messages, commands, payments and bui
 * **Webhook & Polling** — works on any hosting; polling mode requires no public HTTPS URL
 * **Command routing** — register bot commands with `register_bot_command()`
 * **Normalized message hook** — `tgbot_message` fires for all message types (text, photo, voice, video, document, callback_query) with a consistent object structure
+* **Broadcast** — send mass messages to all bot users from the WP admin (Telegram Bot → Broadcast); filter by language, compose per-locale messages, cron-batched delivery with real-time progress and history
 * **Stars payments** — built-in support for Telegram Stars invoices, pre-checkout, and refunds
 * **Multipart uploads** — send photos, audio, voice messages, videos, and documents
 * **Internationalization** — translatable, ships with a .pot file
 
 = Available BotApi methods =
 
-`send_message`, `send_markdown_message`, `send_photo`, `send_document`, `send_audio`, `send_voice`, `send_video`, `send_animation`, `send_chat_action`, `send_location`, `send_stars_invoice`, `forward_message`, `copy_message`, `delete_message`, `delete_messages`, `edit_message`, `edit_message_markup`, `answer_callback_query`, `answer_pre_checkout_query`, `set_my_commands`, `set_webhook`, `delete_webhook`, `get_webhook_info`, `get_updates`, `get_document_url`, `get_photo_url`, `refund_star_payment`
+`send_message`, `send_plain_message`, `send_markdown_message`, `send_photo`, `send_document`, `send_audio`, `send_voice`, `send_video`, `send_animation`, `send_chat_action`, `send_location`, `send_stars_invoice`, `forward_message`, `copy_message`, `delete_message`, `delete_messages`, `edit_message`, `edit_message_markup`, `answer_callback_query`, `answer_pre_checkout_query`, `set_my_commands`, `set_webhook`, `delete_webhook`, `get_webhook_info`, `get_updates`, `get_document_url`, `get_photo_url`, `refund_star_payment`
 
 = Available action hooks =
 
@@ -111,7 +112,7 @@ Use `TGBot\register_bot_command()` inside an `init` hook:
 
 1. Upload the `makarski-bot-connector-for-telegram` folder to `/wp-content/plugins/`
 2. Activate the plugin via **Plugins** in WordPress admin
-3. Go to **Settings → Telegram settings**
+3. Go to **Telegram Bot → Settings**
 4. Enter your bot token (get one from [@BotFather](https://t.me/BotFather))
 5. Choose connection mode:
    * **Webhook** — paste your site's HTTPS URL, click *Set Webhook*. Requires a public HTTPS URL.
@@ -143,8 +144,20 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 
 1. Settings page — enable/disable toggle, token, connection mode (webhook/polling)
 2. Users list — Telegram Nickname column added automatically for linked users
+3. Broadcast page — recipient list with language filter, real-time progress bar, history table
 
 == Changelog ==
+
+= 0.3.0 =
+* New Broadcast feature: send messages to WordPress users with Telegram usernames from a dedicated admin page (Telegram Bot → Broadcast)
+* Per-locale message composition — write separate texts for each language used by your users
+* Message format selector: Plain text, HTML, or MarkdownV2
+* Cron-batched delivery (200 messages/batch, ~20 msg/sec) — safe for large user bases without blocking the site
+* Real-time progress bar with sent/failed counts and estimated time remaining
+* Broadcast history table on the Broadcast page; per-user broadcast history on the user profile page
+* New top-level "Telegram Bot" admin menu with Settings and Broadcast subpages
+* New BotApi method: `send_plain_message()` — send a message without parse_mode
+* Refactored broadcast admin code into TGBot\AdminBroadcast class for consistency
 
 = 0.2.43 =
 * Auto-generate webhook secret on plugin activation so the mandatory secret check always has a value
@@ -217,6 +230,9 @@ No data is sent to Telegram unless the bot is enabled and a valid token is confi
 **Telegram Terms of Service:** https://telegram.org/tos
 
 == Upgrade Notice ==
+
+= 0.3.0 =
+New Broadcast feature requires no action — database tables are created automatically on first load after update.
 
 = 0.2.30 =
 The `tgbot_process_multimedia_message` hook is deprecated. Please migrate your code to use `tgbot_message` — the signature is identical.

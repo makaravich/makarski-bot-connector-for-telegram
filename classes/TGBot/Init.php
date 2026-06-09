@@ -23,6 +23,8 @@ class Init {
         add_action('init', function () {
             \TGBot\ProcessMessages::init();
             \TGBot\Polling::init();
+            \TGBot\Broadcast::init();
+            \TGBot\AdminBroadcast::init();
         }, 999);
 
         // User custom fields
@@ -30,6 +32,8 @@ class Init {
         add_action('edit_user_profile_update', [$this, 'save_tg_nickname_field']);
         add_action('show_user_profile', [$this, 'add_tg_nickname_field']);
         add_action('edit_user_profile', [$this, 'add_tg_nickname_field']);
+        add_action('show_user_profile', [$this, 'add_tg_broadcast_history']);
+        add_action('edit_user_profile', [$this, 'add_tg_broadcast_history']);
         add_filter('manage_users_columns', [$this, 'add_tg_nickname_column']);
         add_filter('manage_users_custom_column', [$this, 'show_tg_nickname_column'], 10, 3);
         add_filter('manage_users_sortable_columns', [$this, 'make_tg_nickname_sortable']);
@@ -54,10 +58,11 @@ class Init {
      *
      * @return void
      */
-    public function add_admin_assets($hook): void {
+    public function add_admin_assets( $hook ): void {
         wp_enqueue_style( 'tgbot-admin-style', TGBOT_PLUGIN_BASEURI . '/admin/styles/admin.min.css', [], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/styles/admin.min.css' ) );
 
-        $js_hooks = [ 'edit.php', 'settings_page_tgbot_options-options' ];
+        // Settings page hook changed from settings_page_ to toplevel_page_ after menu refactor.
+        $js_hooks = [ 'edit.php', 'toplevel_page_tgbot_options-options' ];
         if ( in_array( $hook, $js_hooks, true ) ) {
             wp_enqueue_script( 'tgbot-admin-script', TGBOT_PLUGIN_BASEURI . '/admin/js/admin.js', [ 'jquery' ], filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/admin.js' ), true );
             wp_localize_script( 'tgbot-admin-script', 'tgbotAdmin', [
@@ -67,6 +72,59 @@ class Init {
                 'endpoint'      => tgbot_get_option( 'gen_tg_endpoint' ) ?? '',
                 'labelDisabled' => __( 'Disabled', 'makarski-bot-connector-for-telegram' ),
             ] );
+        }
+
+        // Broadcast page hook: WP derives it from sanitized menu title, use str_ends_with to be safe.
+        if ( str_ends_with( $hook, '_page_tgbot_broadcast' ) ) {
+            wp_enqueue_script(
+                'tgbot-broadcast-script',
+                TGBOT_PLUGIN_BASEURI . '/admin/js/broadcast.js',
+                [ 'jquery' ],
+                filemtime( TGBOT_PLUGIN_BASEPATH . '/admin/js/broadcast.js' ),
+                true
+            );
+
+            // Detect any active job to resume polling on page load.
+            $active_jobs = \TGBot\Broadcast::get_history( 10 );
+            $active_job_id = 0;
+            foreach ( $active_jobs as $j ) {
+                if ( in_array( $j->status, [ 'pending', 'running' ], true ) ) {
+                    $active_job_id = (int) $j->id;
+                    break;
+                }
+            }
+
+            wp_localize_script(
+                'tgbot-broadcast-script',
+                'tgbotBroadcast',
+                [
+                    'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+                    'nonce'       => wp_create_nonce( 'tgbot_broadcast' ),
+                    'activeJobId' => $active_job_id,
+                    'i18n'        => [
+                        'sending'           => __( 'Sending…', 'makarski-bot-connector-for-telegram' ),
+                        'send'              => __( 'Send', 'makarski-bot-connector-for-telegram' ),
+                        'cancel'            => __( 'Cancel', 'makarski-bot-connector-for-telegram' ),
+                        'error'             => __( 'An error occurred. Please try again.', 'makarski-bot-connector-for-telegram' ),
+                        'noMessage'         => __( 'Please enter at least one message.', 'makarski-bot-connector-for-telegram' ),
+                        'format'            => __( 'Format', 'makarski-bot-connector-for-telegram' ),
+                        'fmtPlain'          => __( 'Plain', 'makarski-bot-connector-for-telegram' ),
+                        'fmtHtml'           => __( 'HTML', 'makarski-bot-connector-for-telegram' ),
+                        'fmtMarkdown'       => __( 'Markdown', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %d: number of selected users */
+                        'selected'          => __( 'Selected: %d', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %d: number of selected users */
+                        'sendBtn'           => __( 'Send Broadcast (%d)', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %d: number of recipients */
+                        'modalTitle'        => __( 'Broadcast to %d users', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %s: locale code */
+                        'localeLabel'       => __( 'Message for locale: %s', 'makarski-bot-connector-for-telegram' ),
+                        'messagePlaceholder' => __( 'Enter your message…', 'makarski-bot-connector-for-telegram' ),
+                        /* translators: %sent: sent count, %total: total, %failed: failed count, %min: minutes */
+                        'progressText'      => __( '%sent / %total sent · %failed failed · ~%min min remaining', 'makarski-bot-connector-for-telegram' ), // phpcs:ignore WordPress.WP.I18n.UnorderedPlaceholdersText -- custom JS replacement markers, not PHP printf placeholders
+                    ],
+                ]
+            );
         }
     }
 
@@ -184,6 +242,48 @@ class Init {
                     <p class="description"><?php esc_html_e( 'Enter your nick in Telegram (without @)', 'makarski-bot-connector-for-telegram' ); ?></p>
                 </td>
             </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Show broadcast history on user profile page.
+     *
+     * @param \WP_User $user
+     */
+    function add_tg_broadcast_history( \WP_User $user ): void {
+        $history = \TGBot\Broadcast::get_recipient_history( $user->ID, 20 );
+
+        if ( empty( $history ) ) {
+            return;
+        }
+        ?>
+        <h3><?php esc_html_e( 'Telegram Broadcast History', 'makarski-bot-connector-for-telegram' ); ?></h3>
+        <table class="wp-list-table widefat striped" style="max-width:900px;">
+            <thead>
+                <tr>
+                    <th><?php esc_html_e( 'Date', 'makarski-bot-connector-for-telegram' ); ?></th>
+                    <th><?php esc_html_e( 'Status', 'makarski-bot-connector-for-telegram' ); ?></th>
+                    <th><?php esc_html_e( 'Message', 'makarski-bot-connector-for-telegram' ); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ( $history as $row ) :
+                    $msgs    = json_decode( $row->messages_json, true );
+                    $locale  = get_user_meta( $user->ID, 'locale', true ) ?: 'en_US';
+                    $text    = $msgs[ $locale ] ?? $msgs['en_US'] ?? reset( $msgs ) ?? '';
+                    $preview = mb_substr( $text, 0, 120 );
+                    if ( mb_strlen( $text ) > 120 ) {
+                        $preview .= '…';
+                    }
+                ?>
+                <tr>
+                    <td style="white-space:nowrap;"><?php echo esc_html( $row->sent_at ?: $row->job_created ); ?></td>
+                    <td><span class="tgbot-status-badge tgbot-status-<?php echo esc_attr( $row->status ); ?>"><?php echo esc_html( $row->status ); ?></span></td>
+                    <td><?php echo esc_html( $preview ); ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
         </table>
         <?php
     }
