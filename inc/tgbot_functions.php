@@ -60,6 +60,19 @@ if (!function_exists(__NAMESPACE__ . '\create_broadcast')) {
     }
 }
 
+if (!function_exists(__NAMESPACE__ . '\resolve_audience')) {
+    /**
+     * Resolve a registered audience key to an array of WP user IDs.
+     * Audiences are registered via the `tgbot_audiences` filter.
+     *
+     * @param string $key Audience key, e.g. 'all' or a child-plugin segment.
+     * @return int[] Empty array for unknown keys.
+     */
+    function resolve_audience(string $key): array {
+        return Audiences::resolve($key);
+    }
+}
+
 if (!function_exists(__NAMESPACE__ . '\user_received_campaign')) {
     /**
      * Check whether a user already has a delivery record for the given campaign.

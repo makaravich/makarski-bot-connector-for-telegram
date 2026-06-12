@@ -28,13 +28,23 @@ class AdminBroadcast {
 			wp_send_json_error( [ 'message' => __( 'Forbidden', 'makarski-bot-connector-for-telegram' ) ], 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via array_map( 'absint' ) on the next line
-		$raw_ids  = isset( $_POST['user_ids'] ) ? (array) wp_unslash( $_POST['user_ids'] ) : [];
-		$user_ids = array_map( 'absint', $raw_ids );
-		$user_ids = array_filter( $user_ids );
+		$audience = sanitize_key( wp_unslash( $_POST['audience'] ?? '' ) );
 
-		if ( empty( $user_ids ) ) {
-			wp_send_json_error( [ 'message' => __( 'No users selected.', 'makarski-bot-connector-for-telegram' ) ] );
+		if ( '' !== $audience ) {
+			$user_ids = Audiences::resolve( $audience );
+
+			if ( empty( $user_ids ) ) {
+				wp_send_json_error( [ 'message' => __( 'Selected audience is empty or unknown.', 'makarski-bot-connector-for-telegram' ) ] );
+			}
+		} else {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via array_map( 'absint' ) on the next line
+			$raw_ids  = isset( $_POST['user_ids'] ) ? (array) wp_unslash( $_POST['user_ids'] ) : [];
+			$user_ids = array_map( 'absint', $raw_ids );
+			$user_ids = array_filter( $user_ids );
+
+			if ( empty( $user_ids ) ) {
+				wp_send_json_error( [ 'message' => __( 'No users selected.', 'makarski-bot-connector-for-telegram' ) ] );
+			}
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via sanitize_text_field/sanitize_textarea_field in the loop below
@@ -148,6 +158,26 @@ class AdminBroadcast {
 		}
 		sort( $locales );
 
+		// Registered audiences with resolved counts and locale sets for the compose modal.
+		$audience_data = [];
+		foreach ( Audiences::get_all() as $key => $audience ) {
+			$ids          = Audiences::resolve( $key );
+			$user_locales = [];
+			foreach ( $ids as $uid ) {
+				$loc = get_user_meta( $uid, 'locale', true ) ?: 'en_US';
+				if ( ! in_array( $loc, $user_locales, true ) ) {
+					$user_locales[] = $loc;
+				}
+			}
+			sort( $user_locales );
+
+			$audience_data[ $key ] = [
+				'label'   => $audience['label'],
+				'count'   => count( $ids ),
+				'locales' => $user_locales,
+			];
+		}
+
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Telegram Broadcast', 'makarski-bot-connector-for-telegram' ); ?></h1>
@@ -168,6 +198,31 @@ class AdminBroadcast {
 				<?php if ( empty( $bot_users ) ) : ?>
 					<p><?php esc_html_e( 'No Telegram bot users found. Users need to have a Telegram username configured.', 'makarski-bot-connector-for-telegram' ); ?></p>
 				<?php else : ?>
+
+				<div class="tgbot-broadcast-audience">
+					<label for="tgbot-audience-select">
+						<?php esc_html_e( 'Audience:', 'makarski-bot-connector-for-telegram' ); ?>
+					</label>
+					<select id="tgbot-audience-select">
+						<option value=""><?php esc_html_e( 'Manual selection', 'makarski-bot-connector-for-telegram' ); ?></option>
+						<?php foreach ( $audience_data as $key => $data ) : ?>
+							<option
+								value="<?php echo esc_attr( $key ); ?>"
+								data-count="<?php echo esc_attr( $data['count'] ); ?>"
+								data-locales="<?php echo esc_attr( wp_json_encode( $data['locales'] ) ); ?>"
+							>
+								<?php
+								printf(
+									/* translators: 1: audience label, 2: number of users in the audience */
+									esc_html__( '%1$s (%2$d users)', 'makarski-bot-connector-for-telegram' ),
+									esc_html( $data['label'] ),
+									(int) $data['count']
+								);
+								?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
 
 				<div class="tgbot-broadcast-filters">
 					<label for="tgbot-lang-filter">
