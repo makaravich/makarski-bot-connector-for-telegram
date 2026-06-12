@@ -44,3 +44,31 @@ if (!function_exists('get_registered_bot_commands')) {
         }
     }
 }
+
+if (!function_exists(__NAMESPACE__ . '\create_broadcast')) {
+    /**
+     * Create a broadcast job programmatically (public API for child plugins).
+     *
+     * @param array  $messages     Locale-keyed messages, e.g. ['en_US' => 'Hello!', 'ru_RU' => 'Привет!'].
+     * @param array  $user_ids     WP user IDs to include.
+     * @param string $format       'plain' | 'html' | 'markdown'.
+     * @param string $campaign_key Optional campaign identifier for deduplication of recurring campaigns.
+     * @return int|false The new job ID, or false on failure.
+     */
+    function create_broadcast(array $messages, array $user_ids, string $format = 'plain', string $campaign_key = ''): int|false {
+        return Broadcast::create_job($messages, $format, $user_ids, $campaign_key);
+    }
+}
+
+if (!function_exists(__NAMESPACE__ . '\user_received_campaign')) {
+    /**
+     * Check whether a user already has a delivery record for the given campaign.
+     *
+     * @param int    $user_id      WP user ID.
+     * @param string $campaign_key Campaign identifier passed to create_broadcast().
+     * @return bool
+     */
+    function user_received_campaign(int $user_id, string $campaign_key): bool {
+        return Broadcast::user_received_campaign($user_id, $campaign_key);
+    }
+}
