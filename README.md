@@ -2,7 +2,7 @@
 
 WordPress plugin that connects your site to a Telegram bot. Handles all Telegram Bot API communication so you can focus on your bot's logic using familiar WordPress hooks and filters.
 
-**Version:** 0.3.0 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
+**Version:** 0.3.2 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
 
 ---
 
@@ -281,7 +281,7 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 
 | Method | Description |
 |---|---|
-| `send_message( $text, $chat_id?, $reply_markup? )` | Send HTML text message |
+| `send_message( $text, $chat_id?, $reply_markup?, $reply_to_message_id? )` | Send HTML text message; pass `$reply_to_message_id` to reply to a specific message (Bot API 7.0+) |
 | `send_plain_message( $text, $chat_id? )` | Send plain text message (no parse_mode) |
 | `send_markdown_message( $text, $chat_id?, $reply_markup? )` | Send MarkdownV2 message |
 | `send_chat_action( $action, $chat_id? )` | Show typing/upload indicator. Actions: `typing`, `upload_photo`, `record_voice`, `upload_voice`, `upload_document`, `find_location` |
@@ -314,7 +314,7 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 | Method | Description |
 |---|---|
 | `answer_callback_query( $id, $text?, $show_alert? )` | Acknowledge inline button tap |
-| `run_command( $command )` | Dispatch a registered command programmatically |
+| `run_command( $command )` | Dispatch a registered command programmatically. If `$command` contains a space (e.g. `start payload`), the part after the space is stored in `$bot->command_param` |
 
 ### Payments (Telegram Stars)
 
@@ -333,6 +333,7 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 | `delete_webhook()` | Remove webhook |
 | `get_webhook_info()` | Get current webhook status |
 | `get_updates()` | Fetch pending updates (polling) |
+| `get_me()` | Fetch bot info (`id`, `username`, etc.); result is cached per-token for 24 h |
 
 ### Downloading files
 
@@ -387,6 +388,19 @@ Or set up a real system cron:
 ## Changelog
 
 See [readme.txt](readme.txt) for full changelog.
+
+### 0.3.2
+
+- **Bugfix:** `update_chat_id()` now uses `intval()` instead of `absint()` — group chat IDs (which are negative) were being stripped of their sign, causing all responses to group chats to fail
+- `send_message()`: new optional `$reply_to_message_id` parameter for threaded replies (Bot API 7.0+)
+- New `BotApi::get_me()` — fetch bot info with per-token 24 h transient cache
+- `run_command()`: command parameters are now parsed — `/start payload` stores `payload` in `$bot->command_param`
+
+### 0.3.1
+
+- **Broadcast API:** `campaign_key` deduplication column; `tgbot_broadcast()` helper for programmatic use from child plugins
+- **Audience registry:** `tgbot_audiences` filter for registering named recipient segments; Broadcast UI shows a segment selector
+- Locale: added `uk` → `uk_UA` mapping
 
 ### 0.3.0
 
