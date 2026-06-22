@@ -5,6 +5,26 @@
 	var cfg        = tgbotBroadcast;
 	var pollTimer  = null;
 	var activeJobId = null;
+	var currentAudience = '';
+
+	// -------------------------------------------------------------------------
+	// Audience selector: a non-empty audience replaces manual user selection.
+	// -------------------------------------------------------------------------
+	$( '#tgbot-audience-select' ).on( 'change', function () {
+		currentAudience = $( this ).val();
+		var $manualUi = $( '.tgbot-broadcast-filters, .tgbot-select-actions, #tgbot-user-table' );
+
+		if ( currentAudience ) {
+			$manualUi.hide();
+			var n = $( this ).find( 'option:selected' ).data( 'count' ) || 0;
+			$( '#tgbot-broadcast-btn' )
+				.prop( 'disabled', n === 0 )
+				.text( cfg.i18n.sendBtn.replace( '%d', n ) );
+		} else {
+			$manualUi.show();
+			updateCounter();
+		}
+	} );
 
 	// -------------------------------------------------------------------------
 	// Locale filter
@@ -63,6 +83,17 @@
 	// Send button → open compose modal
 	// -------------------------------------------------------------------------
 	$( '#tgbot-broadcast-btn' ).on( 'click', function () {
+		if ( currentAudience ) {
+			var $opt     = $( '#tgbot-audience-select option:selected' );
+			var count    = $opt.data( 'count' ) || 0;
+			var audLocs  = $opt.data( 'locales' ) || [ 'en_US' ];
+			if ( ! count ) {
+				return;
+			}
+			openModal( count, audLocs );
+			return;
+		}
+
 		var selected = $( '.tgbot-user-cb:checked' );
 		if ( ! selected.length ) {
 			return;
@@ -167,10 +198,6 @@
 			}
 
 			var format  = $modal.find( 'input[name="tgbot_fmt"]:checked' ).val() || 'plain';
-			var userIds = [];
-			$( '.tgbot-user-cb:checked' ).each( function () {
-				userIds.push( $( this ).val() );
-			} );
 
 			// Build POST data.
 			var data = {
@@ -178,9 +205,18 @@
 				nonce   : cfg.nonce,
 				format  : format,
 			};
-			$.each( userIds, function ( i, id ) {
-				data[ 'user_ids[' + i + ']' ] = id;
-			} );
+
+			if ( currentAudience ) {
+				data.audience = currentAudience;
+			} else {
+				var userIds = [];
+				$( '.tgbot-user-cb:checked' ).each( function () {
+					userIds.push( $( this ).val() );
+				} );
+				$.each( userIds, function ( i, id ) {
+					data[ 'user_ids[' + i + ']' ] = id;
+				} );
+			}
 			$.each( messages, function ( loc, text ) {
 				data[ 'messages[' + loc + ']' ] = text;
 			} );

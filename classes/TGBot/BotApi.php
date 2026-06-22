@@ -34,6 +34,9 @@ class BotApi {
 	/** @var bool Whether to auto-execute commands from incoming messages. */
 	private bool $auto_exec = true;
 
+	/** @var string Parameter passed after a bot command (e.g. "grp_-100123" in "/start grp_-100123"). */
+	public string $command_param = '';
+
 
 	public function __construct( $token, $do_get_request = true, $bot_map = [] ) {
 		$this->token   = $token;
@@ -85,14 +88,20 @@ class BotApi {
 	public function run_command( $command ): void {
 		$command = ltrim( $command, '/' );
 
-		if ( strlen( $command ) > 100 ) {
+		if ( strlen( $command ) > 200 ) {
 			$this->send_message( __( 'Too long command', 'makarski-bot-connector-for-telegram' ) );
+			return;
+		}
+
+		// Split "command param" into base command and optional parameter.
+		$parts               = explode( ' ', $command, 2 );
+		$base_command        = $parts[0];
+		$this->command_param = isset( $parts[1] ) ? sanitize_text_field( $parts[1] ) : '';
+
+		if ( method_exists( $this, 'command_' . $base_command ) ) {
+			call_user_func( array( $this, 'command_' . $base_command ) );
 		} else {
-			if ( method_exists( $this, 'command_' . $command ) ) {
-				call_user_func( array( $this, 'command_' . $command ) );
-			} else {
-				$this->send_message( 'Unknown command: ' . $command );
-			}
+			$this->send_message( 'Unknown command: ' . $base_command );
 		}
 	}
 
@@ -113,12 +122,13 @@ class BotApi {
 	/**
 	 * Send a text message.
 	 *
-	 * @param string      $message      Message text (HTML allowed).
-	 * @param string      $chat_id      Target chat ID; defaults to current chat.
-	 * @param array|null  $reply_markup Optional inline keyboard markup.
+	 * @param string      $message              Message text (HTML allowed).
+	 * @param string      $chat_id              Target chat ID; defaults to current chat.
+	 * @param array|null  $reply_markup         Optional inline keyboard markup.
+	 * @param int|null    $reply_to_message_id  If set, sends the message as a reply to this message ID.
 	 * @return mixed
 	 */
-	public function send_message( $message, string $chat_id = '', $reply_markup = null ): mixed {
+	public function send_message( $message, string $chat_id = '', $reply_markup = null, ?int $reply_to_message_id = null ): mixed {
 		if ( '' === $chat_id ) {
 			$chat_id = $this->chat_id;
 		}
@@ -131,6 +141,10 @@ class BotApi {
 
 		if ( $reply_markup ) {
 			$data['reply_markup'] = wp_json_encode( $reply_markup );
+		}
+
+		if ( $reply_to_message_id ) {
+			$data['reply_parameters'] = wp_json_encode( array( 'message_id' => $reply_to_message_id ) );
 		}
 
 		return $this->send_request( $this->api_url . 'sendMessage', $data );
@@ -723,6 +737,28 @@ class BotApi {
 	}
 
 	/**
+	 * Get the bot's own info (username, id, etc.). Result is cached for 24 hours.
+	 *
+	 * @return object|null Bot user object, or null on error.
+	 */
+	public function get_me(): ?object {
+		$cache_key = 'tgbot_get_me_' . substr( md5( $this->token ), 0, 8 );
+		$cached    = get_transient( $cache_key );
+		if ( $cached ) {
+			return $cached;
+		}
+
+		$response = $this->send_request( $this->api_url . 'getMe' );
+
+		if ( ! empty( $response->ok ) && isset( $response->result ) ) {
+			set_transient( $cache_key, $response->result, DAY_IN_SECONDS );
+			return $response->result;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Read and parse the incoming webhook request from Telegram.
 	 *
 	 * @return object|false
@@ -796,7 +832,8 @@ class BotApi {
 		}
 
 		if ( $chat_id ) {
-			$this->chat_id = (string) absint( $chat_id );
+			// Use intval, not absint — group chat IDs are negative numbers.
+			$this->chat_id = (string) intval( $chat_id );
 		}
 	}
 

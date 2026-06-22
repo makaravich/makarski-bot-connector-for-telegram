@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.3.0
+Stable tag: 0.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -147,6 +147,17 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 3. Broadcast page — recipient list with language filter, real-time progress bar, history table
 
 == Changelog ==
+
+= 0.3.2 =
+* BotApi: fixed `update_chat_id()` — replaced `absint()` with `intval()` so negative group chat IDs are preserved correctly (group support)
+* BotApi: `send_message()` accepts new optional `$reply_to_message_id` parameter — sends the reply using Bot API 7.0+ `reply_parameters`
+* BotApi: new `get_me()` method — fetches bot info via `getMe` and caches per-token with a 24-hour transient
+* BotApi / Bot: `run_command()` parses the command parameter — `/start payload` sets `$bot->command_param = 'payload'` for use in command callbacks; max command+param length increased from 100 to 200
+
+= 0.3.1 =
+* Broadcast API: new `campaign_key` column for deduplication; new `tgbot_broadcast()` helper for programmatic broadcasts from child plugins
+* Audience registry: `tgbot_audiences` filter lets child plugins register named recipient segments; Broadcast UI shows a segment selector
+* Locale mapping: added `uk` → `uk_UA` locale code
 
 = 0.3.0 =
 * New Broadcast feature: send messages to WordPress users with Telegram usernames from a dedicated admin page (Telegram Bot → Broadcast)

@@ -475,6 +475,7 @@ class ProcessMessages {
             'pl' => 'pl_PL',
             'ru' => 'ru_RU',
             'be' => 'bel',
+            'uk' => 'uk_UA',
         ];
 
         if ($locale && array_key_exists($locale, $locales)) {

@@ -13,7 +13,7 @@ class Broadcast {
 
 	const CRON_HOOK  = 'tgbot_process_broadcast';
 	const BATCH_SIZE = 200;
-	const DB_VERSION = '1.0';
+	const DB_VERSION = '1.1';
 	const DB_VERSION_OPTION = 'tgbot_broadcast_db_version';
 
 	// ---------------------------------------------------------------------------
@@ -52,11 +52,13 @@ class Broadcast {
 			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			messages_json LONGTEXT      NOT NULL,
 			format      VARCHAR(20)     NOT NULL DEFAULT 'plain',
+			campaign_key VARCHAR(100)   NOT NULL DEFAULT '',
 			status      VARCHAR(20)     NOT NULL DEFAULT 'pending',
 			total       INT             NOT NULL DEFAULT 0,
 			sent        INT             NOT NULL DEFAULT 0,
 			failed      INT             NOT NULL DEFAULT 0,
-			PRIMARY KEY (id)
+			PRIMARY KEY (id),
+			KEY campaign_key (campaign_key)
 		) {$charset_collate};
 
 		CREATE TABLE {$recipients} (
@@ -96,13 +98,14 @@ class Broadcast {
 	/**
 	 * Create a new broadcast job.
 	 *
-	 * @param array  $messages  Locale-keyed messages, e.g. ['en_US' => 'Hello!', 'ru_RU' => 'Привет!'].
-	 * @param string $format    'plain' | 'html' | 'markdown'.
-	 * @param array  $user_ids  WP user IDs to include.
+	 * @param array  $messages     Locale-keyed messages, e.g. ['en_US' => 'Hello!', 'ru_RU' => 'Привет!'].
+	 * @param string $format       'plain' | 'html' | 'markdown'.
+	 * @param array  $user_ids     WP user IDs to include.
+	 * @param string $campaign_key Optional campaign identifier for recurring campaigns deduplication.
 	 *
 	 * @return int|false  The new job ID, or false on failure.
 	 */
-	public static function create_job( array $messages, string $format, array $user_ids ): int|false {
+	public static function create_job( array $messages, string $format, array $user_ids, string $campaign_key = '' ): int|false {
 		global $wpdb;
 
 		if ( empty( $messages ) || empty( $user_ids ) ) {
@@ -153,12 +156,13 @@ class Broadcast {
 				'created_at'    => current_time( 'mysql' ),
 				'messages_json' => wp_json_encode( $messages ),
 				'format'        => $format,
+				'campaign_key'  => sanitize_key( $campaign_key ),
 				'status'        => 'pending',
 				'total'         => count( $recipients ),
 				'sent'          => 0,
 				'failed'        => 0,
 			],
-			[ '%s', '%s', '%s', '%s', '%d', '%d', '%d' ]
+			[ '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d' ]
 		);
 
 		if ( ! $inserted ) {
@@ -489,6 +493,43 @@ class Broadcast {
 		);
 
 		return $rows ?: [];
+	}
+
+	/**
+	 * Check whether a user already has a delivery record for the given campaign.
+	 *
+	 * Any record counts (pending, sent or failed) — a failed delivery is treated
+	 * as "received" on purpose, so recurring campaigns never retry-spam users
+	 * who blocked the bot.
+	 *
+	 * @param int    $user_id
+	 * @param string $campaign_key
+	 * @return bool
+	 */
+	public static function user_received_campaign( int $user_id, string $campaign_key ): bool {
+		global $wpdb;
+
+		$campaign_key = sanitize_key( $campaign_key );
+		if ( '' === $campaign_key ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$found = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT r.id
+				 FROM %i r
+				 INNER JOIN %i j ON j.id = r.broadcast_id
+				 WHERE r.user_id = %d AND j.campaign_key = %s
+				 LIMIT 1",
+				self::recipients_table(),
+				self::jobs_table(),
+				$user_id,
+				$campaign_key
+			)
+		);
+
+		return ! empty( $found );
 	}
 
 	/**
