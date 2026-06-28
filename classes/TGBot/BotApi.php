@@ -309,21 +309,27 @@ class BotApi {
 	 * Send a photo from a local file path.
 	 * Uses multipart/form-data via curl — wp_remote_post does not support CURLFile.
 	 *
-	 * @param string      $photo_path  Absolute path to the image file.
-	 * @param string|null $caption     Optional caption.
-	 * @param string      $chat_id     Target chat ID; defaults to current chat.
+	 * @param string      $photo_path   Absolute path to the image file.
+	 * @param string|null $caption      Optional caption (HTML supported).
+	 * @param string      $chat_id      Target chat ID; defaults to current chat.
+	 * @param array|null  $reply_markup Optional inline keyboard markup.
 	 * @return mixed
 	 */
-	public function send_photo( $photo_path, $caption = null, string $chat_id = '' ): mixed {
+	public function send_photo( $photo_path, $caption = null, string $chat_id = '', ?array $reply_markup = null ): mixed {
 		if ( '' === $chat_id ) {
 			$chat_id = $this->chat_id;
 		}
 
 		$data = array(
-			'chat_id' => $chat_id,
-			'photo'   => new \CURLFile( realpath( $photo_path ) ),
-			'caption' => $caption,
+			'chat_id'    => $chat_id,
+			'photo'      => new \CURLFile( realpath( $photo_path ) ),
+			'caption'    => $caption,
+			'parse_mode' => 'HTML',
 		);
+
+		if ( $reply_markup !== null ) {
+			$data['reply_markup'] = wp_json_encode( $reply_markup );
+		}
 
 		return $this->send_multipart_request( $this->api_url . 'sendPhoto', $data );
 	}
@@ -759,6 +765,23 @@ class BotApi {
 	}
 
 	/**
+	 * Get information about a member of a chat.
+	 * Returns a ChatMember object, or null on failure.
+	 * The `status` field is one of: creator, administrator, member, restricted, left, kicked.
+	 *
+	 * @param string $chat_id  Telegram chat ID (group: negative number as string).
+	 * @param int    $user_id  Telegram user ID.
+	 */
+	public function get_chat_member( string $chat_id, int $user_id ): ?object {
+		$response = $this->send_request( $this->api_url . 'getChatMember', [
+			'chat_id' => $chat_id,
+			'user_id' => $user_id,
+		] );
+
+		return ( ! empty( $response->ok ) && isset( $response->result ) ) ? $response->result : null;
+	}
+
+	/**
 	 * Read and parse the incoming webhook request from Telegram.
 	 *
 	 * @return object|false
@@ -829,6 +852,10 @@ class BotApi {
 
 		if ( ! $chat_id ) {
 			$chat_id = $this->request_respond->callback_query->from->id ?? null;
+		}
+
+		if ( ! $chat_id ) {
+			$chat_id = $this->request_respond->my_chat_member->chat->id ?? null;
 		}
 
 		if ( $chat_id ) {
