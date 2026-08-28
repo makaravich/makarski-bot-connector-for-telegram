@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.3.2
+Stable tag: 0.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -147,6 +147,14 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 3. Broadcast page — recipient list with language filter, real-time progress bar, history table
 
 == Changelog ==
+
+= 0.3.3 =
+* BotApi: new `get_chat_member()` method — returns ChatMember object (status: creator, administrator, member, restricted, left, kicked); returns null on failure
+* BotApi: `update_chat_id()` now also reads `my_chat_member->chat->id` — enables processing of bot-added-to-group updates
+* ProcessMessages: new `tgbot_my_chat_member` action hook — fires when the bot is added to or removed from a group, passes (Bot $bot, int $group_wp_user_id, object $mch)
+* BotApi: `send_photo()` accepts new optional `$reply_markup` parameter — send an image with inline buttons in one message
+* Settings: webhook endpoint is normalized on save (slashes trimmed, invalid characters stripped) — a trailing slash used to silently break the rewrite rule so the webhook returned 404
+* Fix: an empty endpoint no longer registers a rewrite rule that hijacks the homepage
 
 = 0.3.2 =
 * BotApi: fixed `update_chat_id()` — replaced `absint()` with `intval()` so negative group chat IDs are preserved correctly (group support)

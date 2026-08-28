@@ -2,7 +2,7 @@
 
 WordPress plugin that connects your site to a Telegram bot. Handles all Telegram Bot API communication so you can focus on your bot's logic using familiar WordPress hooks and filters.
 
-**Version:** 0.3.2 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
+**Version:** 0.3.3 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
 
 ---
 
@@ -233,6 +233,30 @@ add_action( 'tgbot_successful_payment', function ( $bot, $payment, $user_id ) {
 
 ---
 
+### `tgbot_my_chat_member`
+
+Fires when the bot is **added to or removed from a group** (Telegram `my_chat_member` update).
+
+```php
+add_action( 'tgbot_my_chat_member', function ( $bot, $group_wp_user_id, $mch ) {
+    // $bot              — TGBot\Bot instance (chat_id = group chat_id)
+    // $group_wp_user_id — WP user ID of the auto-created group account
+    // $mch              — my_chat_member object from Telegram:
+    //   $mch->chat                    — group info (id, title, type)
+    //   $mch->from                    — who triggered the change (Telegram user)
+    //   $mch->old_chat_member->status
+    //   $mch->new_chat_member->status — 'member' = bot added, 'kicked'/'left' = removed
+
+    if ( ( $mch->new_chat_member->status ?? '' ) === 'member' ) {
+        $bot->send_message( 'Thanks for adding me to ' . esc_html( $mch->chat->title ) . '!' );
+    }
+}, 10, 3 );
+```
+
+Combine with `get_chat_member()` to verify that the person who added the bot is a group administrator.
+
+---
+
 ### Deprecated hook
 
 | Old hook | Replacement | Notes |
@@ -290,7 +314,7 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 
 | Method | Description |
 |---|---|
-| `send_photo( $path, $caption?, $chat_id? )` | Send image from local path |
+| `send_photo( $path, $caption?, $chat_id?, $reply_markup? )` | Send image from local path; pass `$reply_markup` to attach inline buttons |
 | `send_document( $path, $caption?, $chat_id? )` | Send file from local path |
 | `send_audio( $path, $caption?, $chat_id? )` | Send audio file |
 | `send_voice( $path, $caption?, $chat_id? )` | Send voice message (OGG/Opus) |
@@ -334,6 +358,7 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 | `get_webhook_info()` | Get current webhook status |
 | `get_updates()` | Fetch pending updates (polling) |
 | `get_me()` | Fetch bot info (`id`, `username`, etc.); result is cached per-token for 24 h |
+| `get_chat_member( $chat_id, $user_id )` | Get chat member info (`status`: `creator` · `administrator` · `member` · `restricted` · `left` · `kicked`); returns `null` on failure |
 
 ### Downloading files
 
@@ -388,6 +413,15 @@ Or set up a real system cron:
 ## Changelog
 
 See [readme.txt](readme.txt) for full changelog.
+
+### 0.3.3
+
+- New `BotApi::get_chat_member()` — chat member info with `status` (creator / administrator / member / restricted / left / kicked), `null` on failure
+- `update_chat_id()` falls back to `my_chat_member->chat->id` — bot-added-to-group updates are no longer dropped
+- New `tgbot_my_chat_member` action hook — fires when the bot is added to or removed from a group
+- `send_photo()`: new optional `$reply_markup` parameter — image + caption + inline buttons in one message
+- Settings: webhook endpoint normalized on save — a trailing slash used to silently break the rewrite rule (webhook 404)
+- Fix: empty endpoint no longer registers a rewrite rule that hijacks the homepage
 
 ### 0.3.2
 
