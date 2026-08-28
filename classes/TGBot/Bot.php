@@ -20,11 +20,13 @@ class Bot extends BotApi {
 		$tg_bot_commands = get_registered_bot_commands();
 
 		if ( isset( $tg_bot_commands[ $base_command ] ) && is_callable( $tg_bot_commands[ $base_command ] ) ) {
+			Analytics::log_command( (int) $this->chat_id, $base_command );
 			call_user_func( $tg_bot_commands[ $base_command ], $this );
 		} else {
 			$commander = new BotCommands();
 
 			if ( is_callable( array( $commander, $base_command ) ) ) {
+				Analytics::log_command( (int) $this->chat_id, $base_command );
 				$commander->$base_command( $this );
 			} else {
 				$this->send_message( __( 'Unknown command: ', 'makarski-bot-connector-for-telegram' ) . $base_command );

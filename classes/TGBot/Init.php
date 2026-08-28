@@ -29,6 +29,8 @@ class Init {
             \TGBot\Polling::init();
             \TGBot\Broadcast::init();
             \TGBot\AdminBroadcast::init();
+            \TGBot\AdminAnalytics::init();
+            \TGBot\AdminDocs::init();
         }, 999);
 
         // User custom fields

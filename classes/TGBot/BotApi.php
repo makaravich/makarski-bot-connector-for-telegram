@@ -1125,7 +1125,7 @@ class BotApi {
 	 *
 	 * @param string $url Full API URL of the call.
 	 */
-	private function is_sending_suppressed( string $url ): bool {
+	private function is_sending_suppressed( string $url, array $data = array() ): bool {
 		if ( tgbot_can_send() || ! self::is_user_facing_method( $url ) ) {
 			return false;
 		}
@@ -1137,7 +1137,42 @@ class BotApi {
 			'description'    => 'Sending suppressed: the bot is disabled in Telegram Bot settings (gen_tg_enabled).',
 		);
 
+		Analytics::log_delivery(
+			(int) ( $data['chat_id'] ?? 0 ),
+			self::api_method_from_url( $url ),
+			'skipped',
+			'bot disabled (gen_tg_enabled)'
+		);
+
 		return true;
+	}
+
+	/**
+	 * Track a failed user-facing send in analytics; a permanent Telegram
+	 * refusal (blocked / deactivated / chat gone) also stamps blocked_at on
+	 * the chat's registry row.
+	 *
+	 * @param string $url         Full API URL of the call.
+	 * @param array  $data        Request payload (chat_id is read from it).
+	 * @param string $description Telegram error description.
+	 */
+	private function track_send_failure( string $url, array $data, string $description ): void {
+		if ( ! self::is_user_facing_method( $url ) ) {
+			return;
+		}
+
+		$chat_id = (int) ( $data['chat_id'] ?? 0 );
+
+		Analytics::log_delivery( $chat_id, self::api_method_from_url( $url ), 'failed', $description );
+
+		if ( $chat_id && Analytics::is_unreachable_error( $description ) ) {
+			Analytics::mark_blocked( $chat_id );
+		}
+	}
+
+	/** Extract the Telegram API method name ('sendMessage' → 'sendmessage') from a call URL. */
+	private static function api_method_from_url( string $url ): string {
+		return strtolower( (string) preg_replace( '#^.*/#', '', (string) strtok( $url, '?' ) ) );
 	}
 
 	/**
@@ -1147,7 +1182,7 @@ class BotApi {
 	 * @param string $url Full API URL of the call.
 	 */
 	private static function is_user_facing_method( string $url ): bool {
-		$method = strtolower( (string) preg_replace( '#^.*/#', '', (string) strtok( $url, '?' ) ) );
+		$method = self::api_method_from_url( $url );
 
 		if ( 'deletewebhook' === $method ) {
 			return false; // Administrative despite the prefix.
@@ -1165,7 +1200,7 @@ class BotApi {
 	}
 
 	private function send_request( string $url, array $data = [] ): mixed {
-		if ( $this->is_sending_suppressed( $url ) ) {
+		if ( $this->is_sending_suppressed( $url, $data ) ) {
 			return $this->last_request_response;
 		}
 
@@ -1208,6 +1243,7 @@ class BotApi {
 
 		if ( ! $this->last_request_response->ok ) {
 			error_log( sprintf( '[TGBot] send_request Telegram error: %s url=%s', $this->last_request_response->description ?? 'Unknown', $url ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			$this->track_send_failure( $url, $data, (string) ( $this->last_request_response->description ?? '' ) );
 		}
 
 		return $this->last_request_response;
@@ -1223,7 +1259,7 @@ class BotApi {
 	 * @return mixed Decoded response object.
 	 */
 	private function send_multipart_request( string $url, array $data ): mixed {
-		if ( $this->is_sending_suppressed( $url ) ) {
+		if ( $this->is_sending_suppressed( $url, $data ) ) {
 			return $this->last_request_response;
 		}
 
@@ -1254,6 +1290,7 @@ class BotApi {
 
 		if ( ! $this->last_request_response->ok ) {
 			error_log( '[TGBot ERROR] ' . ( $this->last_request_response->description ?? 'Unknown error' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			$this->track_send_failure( $url, $data, (string) ( $this->last_request_response->description ?? '' ) );
 		}
 
 		return $this->last_request_response;

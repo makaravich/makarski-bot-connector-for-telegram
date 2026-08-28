@@ -2,7 +2,19 @@
 
 WordPress plugin that connects your site to a Telegram bot. Handles all Telegram Bot API communication so you can focus on your bot's logic using familiar WordPress hooks and filters.
 
-**Version:** 0.3.4 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
+**Version:** 0.3.5 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
+
+**What you get:**
+
+- **Webhook & polling** connection modes — works on any hosting, including localhost
+- **Command routing** and a normalized `tgbot_message` hook for every message type
+- **30+ BotApi methods** — messages, media, inline keyboards, Stars payments, groups
+- **Auto-split** of messages over Telegram's 4096-unit limit (HTML tags kept valid per chunk)
+- **Broadcast** — mass messages from wp-admin with per-locale texts, batching, progress, history
+- **Analytics** — a tabbed admin page: overview, commands, delivery/blocks, sources, languages, referrals
+- **Privacy** — auto-created bot users are hidden from public site surfaces
+- **Send gating** — the Enable-bot toggle silences outgoing traffic too (`tgbot_can_send()`)
+- **Documentation** right in wp-admin (**Telegram Bot → Documentation**)
 
 ---
 
@@ -12,8 +24,11 @@ WordPress plugin that connects your site to a Telegram bot. Handles all Telegram
 - [Quick Start](#quick-start)
 - [Connection Modes](#connection-modes)
 - [Broadcast](#broadcast)
+- [Analytics](#analytics)
+- [Privacy](#privacy)
 - [Registering Commands](#registering-commands)
 - [Action Hooks](#action-hooks)
+- [Filters](#filters)
 - [Message Object](#message-object)
 - [BotApi Methods](#botapi-methods)
 - [Server Requirements](#server-requirements)
@@ -27,6 +42,8 @@ WordPress plugin that connects your site to a Telegram bot. Handles all Telegram
 3. Go to **Telegram Bot → Settings**
 4. Paste your bot token (from [@BotFather](https://t.me/BotFather)) and click **Save**
 5. Choose [connection mode](#connection-modes) and configure it
+
+The **Telegram Bot** admin menu then contains **Settings**, **Broadcast**, **Analytics**, and **Documentation** (this document, rendered in wp-admin).
 
 ---
 
@@ -96,6 +113,118 @@ The **Broadcast** page (**Telegram Bot → Broadcast**) lets site administrators
 5. The job is queued and processed in the background; the page shows progress automatically
 
 > Only users with a Telegram username saved in their WordPress profile appear as recipients.
+
+### Programmatic API (for child plugins)
+
+```php
+// Create a broadcast job from code. $campaign_key deduplicates recurring campaigns.
+$job_id = TGBot\create_broadcast(
+    [ 'en_US' => 'Hello!', 'ru_RU' => 'Привет!' ], // locale-keyed messages
+    $user_ids,                                     // WP user IDs
+    'html',                                        // 'plain' | 'html' | 'markdown'
+    'spring_promo'                                 // optional campaign key
+);
+
+// Has this user already received the campaign?
+TGBot\user_received_campaign( $user_id, 'spring_promo' );
+
+// Resolve a named audience (registered via the 'tgbot_audiences' filter) to user IDs.
+$user_ids = TGBot\resolve_audience( 'premium' );
+
+// Register your own audience segment — it also appears in the Broadcast UI selector.
+add_filter( 'tgbot_audiences', function ( $audiences ) {
+    $audiences['premium'] = [
+        'label'    => 'Premium users',
+        'callback' => fn() => get_users( [ 'meta_key' => 'is_premium', 'fields' => 'ID' ] ),
+    ];
+    return $audiences;
+} );
+```
+
+---
+
+## Analytics
+
+The **Analytics** page (**Telegram Bot → Analytics**) gives every bot built on the connector basic product analytics with zero code:
+
+| Tab | Shows |
+|---|---|
+| **Overview** | Total chats, groups, new today / 7 days / 30 days, active (7 days), blocked |
+| **Commands** | Command usage over the last 30 days (uses + unique chats) |
+| **Delivery** | Chats that blocked the bot; recent failed/suppressed sends |
+| **Sources** | First-touch acquisition from `t.me/<bot>?start=<code>` deep links |
+| **Languages** | Raw Telegram `language_code` each chat arrived with — demand for languages you may not support yet |
+| **Referrals** | Referrals recorded from `?start=ref_<code>` links, top referrers |
+
+Everything is recorded automatically inside the connector: registration, incoming activity (`last_seen`, unblock detection), dispatched commands, failed sends (a permanent Telegram refusal — *blocked by the user*, *user is deactivated*, *chat not found* — stamps `blocked_at`), sources, languages, and referrals. Successful sends are **not** logged. Times are stored in UTC.
+
+### Related hooks
+
+```php
+// A WP user was just created for a new Telegram chat.
+add_action( 'tgbot_user_registered', function ( $wp_user_id, $chat_id, $from ) {
+    // $from — Telegram 'from' object (may be null)
+}, 10, 3 );
+
+// Someone registered via a ?start=ref_<code> link. Grant your reward here.
+add_action( 'tgbot_referral_completed', function ( $referrer_chat_id, $referred_chat_id, $referrer_wp_user_id ) {
+    // e.g. credit the referrer
+}, 10, 3 );
+```
+
+`TGBot\Analytics::referral_code( $chat_id )` returns (lazily creating) the chat's code for building `https://t.me/<bot>?start=ref_<code>` links.
+
+### Adding your own tabs
+
+Consumer plugins can add tabs next to the built-in ones via the `tgbot_analytics_tabs` filter, and should build them from the public rendering helpers so every tab looks consistent:
+
+```php
+add_filter( 'tgbot_analytics_tabs', function ( $tabs ) {
+    $tabs['funnel'] = [
+        'label'  => __( 'Funnel', 'my-bot' ),
+        'render' => function () {
+            \TGBot\AdminAnalytics::cards( [
+                'Arrived' => 276,
+                'Engaged' => 91,
+                'Paid'    => 7,
+            ] );
+
+            \TGBot\AdminAnalytics::table(
+                [ 'Step', 'Users', '%' ],
+                [
+                    [ 'arrived', 276, '100%' ],
+                    [ 'engaged',  91,  '33%' ],
+                    [ 'paid',      7,   '3%' ],
+                ]
+            );
+        },
+    ];
+
+    return $tabs;
+} );
+```
+
+Helper contract: `cards( array $label_to_value )` renders a row of stat cards; `card( $label, $value )` renders one; `table( array $headers, array $rows, $max_width = '760px' )` renders a striped admin table. All content is escaped by the helpers — pass plain strings, not markup. Malformed tab entries (missing `label`/`render`, non-callable `render`) are silently dropped, so a broken consumer filter can't take the page down.
+
+---
+
+## Privacy
+
+The connector creates a WordPress user for every Telegram chat, with the chat_id as the login. Left alone, WordPress would publish an **author archive** for each of them — `/author/<chat_id>/` answering 200 — letting anyone confirm from outside whether a given Telegram account has contacted your bot.
+
+The connector closes this by default, **selectively — only for its own auto-created users** (real human author pages keep working):
+
+- the author archive of a bot user (both `/author/<chat_id>/` and `?author=<ID>`) returns a genuine **404**, with no canonical redirect leaking the login first
+- bot users are excluded from the **core users sitemap** and the public **REST users collection** (`/wp/v2/users`), including single-user reads
+- bot users are recognized by a marker meta stamped at creation; accounts created by older plugin versions are marked automatically on upgrade
+
+Opt out (e.g. if your bot users are intentionally public):
+
+```php
+add_filter( 'tgbot_protect_bot_users', '__return_false' );
+```
+
+Related: while the **Enable bot** toggle is off, all user-facing API calls are suppressed and return `ok = false` with `tgbot_disabled = true` — so a dev copy restored from a production database can't accidentally message real people. Administrative calls (webhook management, `get_me()`, refunds) keep working. Check `tgbot_can_send()` in your own sending paths.
 
 ---
 
@@ -257,12 +386,31 @@ Combine with `get_chat_member()` to verify that the person who added the bot is 
 
 ---
 
+### `tgbot_user_registered` / `tgbot_referral_completed`
+
+Fire when a WP user is created for a new chat, and when someone registers via a `?start=ref_<code>` link — see [Analytics → Related hooks](#related-hooks) for signatures and examples.
+
+---
+
 ### Deprecated hook
 
 | Old hook | Replacement | Notes |
 |---|---|---|
 | `tgbot_process_multimedia_message` | `tgbot_message` | Kept as alias — signature identical |
 | `tgbot_process_message` | `tgbot_raw_message` | Fires with raw update |
+
+---
+
+## Filters
+
+| Filter | Purpose |
+|---|---|
+| `tgbot_help_message` | Change the text sent on `/start` and `/help`. Evaluated lazily at send time, in the current request locale |
+| `tgbot_can_send` | Override the outgoing-send gate (default: the **Enable bot** toggle). Return `true` to force sending, `false` to silence the bot |
+| `tgbot_protect_bot_users` | Return `false` to disable hiding bot users from public surfaces — see [Privacy](#privacy) |
+| `tgbot_audiences` | Register named recipient segments for Broadcast — see [Broadcast → Programmatic API](#programmatic-api-for-child-plugins) |
+| `tgbot_analytics_tabs` | Add your own tabs to the Analytics page — see [Analytics → Adding your own tabs](#adding-your-own-tabs) |
+| `tgbot_register_bot_command` | Intercept command registration: receives `($callback, $command)`; return a modified callback, or a falsy value to drop the command |
 
 ---
 
@@ -413,6 +561,16 @@ Or set up a real system cron:
 ## Changelog
 
 See [readme.txt](readme.txt) for full changelog.
+
+### 0.3.5
+
+- New **Analytics** admin page (**Telegram Bot → Analytics**) with tabs: Overview, Commands, Delivery (blocked chats + failed sends), Sources (first-touch `?start=` attribution), Languages (arrival `language_code`), Referrals
+- New analytics registry and event tables (`tgbot_users`, `tgbot_commands`, `tgbot_deliveries`, `tgbot_referrals`), filled automatically; existing bot users back-filled on upgrade
+- Blocked-chat detection: a permanent Telegram refusal stamps `blocked_at`; the next incoming update clears it
+- Built-in referral tracking via `?start=ref_<code>` links: `Analytics::referral_code()`, rewards via the `tgbot_referral_completed` action
+- New `tgbot_user_registered` action — fires when a WP user is created for a new chat
+- **Tab API** for consumer plugins: `tgbot_analytics_tabs` filter + public rendering helpers `AdminAnalytics::card()` / `cards()` / `table()`
+- New **Documentation** admin page (**Telegram Bot → Documentation**) — this README rendered in wp-admin, with a GitHub link
 
 ### 0.3.4
 

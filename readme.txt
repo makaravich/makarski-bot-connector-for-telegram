@@ -4,7 +4,7 @@ Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 0.3.4
+Stable tag: 0.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,7 @@ Connect WordPress to a Telegram bot. Handle messages, commands, payments and bui
 * Automatically creates WordPress users for incoming chat IDs
 * Dispatches incoming messages and commands through WordPress action hooks
 * Provides a full-featured BotApi class with 30+ methods
+* Ships a tabbed Analytics page, mass Broadcast, and in-admin Documentation
 
 = Key features =
 
@@ -27,8 +28,14 @@ Connect WordPress to a Telegram bot. Handle messages, commands, payments and bui
 * **Command routing** — register bot commands with `register_bot_command()`
 * **Normalized message hook** — `tgbot_message` fires for all message types (text, photo, voice, video, document, callback_query) with a consistent object structure
 * **Broadcast** — send mass messages to all bot users from the WP admin (Telegram Bot → Broadcast); filter by language, compose per-locale messages, cron-batched delivery with real-time progress and history
+* **Analytics** — a tabbed page (Telegram Bot → Analytics): overview counters, command usage, blocked chats and failed sends, first-touch acquisition sources from `?start=` deep links, arrival languages, referrals; consumer plugins can add their own tabs via the `tgbot_analytics_tabs` filter
+* **Auto-split long messages** — text over Telegram's 4096-character limit is split at paragraph/line/word boundaries with HTML tags kept valid per chunk
+* **Privacy by default** — auto-created bot users are hidden from author archives, the users sitemap, and the public REST users collection (opt out with the `tgbot_protect_bot_users` filter)
+* **Send gating** — the Enable-bot toggle silences outgoing traffic too; check `tgbot_can_send()` in your own sending paths
+* **Referral links** — built-in `?start=ref_<code>` tracking with a reward hook for your plugin
 * **Stars payments** — built-in support for Telegram Stars invoices, pre-checkout, and refunds
 * **Multipart uploads** — send photos, audio, voice messages, videos, and documents
+* **Documentation in wp-admin** — the full developer manual on its own admin page
 * **Internationalization** — translatable, ships with a .pot file
 
 = Available BotApi methods =
@@ -79,6 +86,19 @@ Fires after a successful Telegram Stars payment.
 
 **`tgbot_raw_message`**
 Fires with the raw Telegram update object for advanced use cases.
+
+**`tgbot_my_chat_member`**
+Fires when the bot is added to or removed from a group.
+
+**`tgbot_user_registered`**
+Fires when a WordPress user is created for a new Telegram chat.
+
+    add_action( 'tgbot_user_registered', function( $wp_user_id, $chat_id, $from ) {
+        // $from — Telegram 'from' object (may be null)
+    }, 10, 3 );
+
+**`tgbot_referral_completed`**
+Fires when a new chat registers via a `?start=ref_<code>` referral link — grant your reward here.
 
 = Registering bot commands =
 
@@ -147,6 +167,15 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 3. Broadcast page — recipient list with language filter, real-time progress bar, history table
 
 == Changelog ==
+
+= 0.3.5 =
+* New Analytics admin page (Telegram Bot → Analytics) with tabs: Overview, Commands, Delivery (blocked chats + failed sends), Sources (first-touch acquisition from `?start=` deep links), Languages (arrival language_code), Referrals
+* New analytics tables (`tgbot_users`, `tgbot_commands`, `tgbot_deliveries`, `tgbot_referrals`) filled automatically by the connector; existing bot users are back-filled on upgrade
+* Blocked-chat detection: a permanent Telegram refusal ("blocked by the user", "user is deactivated", "chat not found") stamps `blocked_at`; the next incoming update clears it
+* Built-in referral tracking via `?start=ref_<code>` deep links — `TGBot\Analytics::referral_code()` builds codes, the `tgbot_referral_completed` action lets your plugin grant rewards
+* New `tgbot_user_registered` action — fires when a WordPress user is created for a new Telegram chat
+* Tab API for consumer plugins: the `tgbot_analytics_tabs` filter plus public rendering helpers `AdminAnalytics::card()` / `cards()` / `table()`
+* New Documentation admin page (Telegram Bot → Documentation) — the full developer manual rendered in wp-admin, with a GitHub link
 
 = 0.3.4 =
 * Compatibility: tested up to WordPress 7.1

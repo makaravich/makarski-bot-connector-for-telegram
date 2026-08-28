@@ -45,6 +45,9 @@ class ProcessMessages {
         } elseif (is_int($user_data) && $user_data != 0) {
             $user_id = $user_data;
 
+            // Analytics: bump last_seen, clear blocked_at, capture arrival language.
+            Analytics::touch((int) $chat_id, self::request_language(), $user_id);
+
             Core::set_current_user($user_id);
 
             // Re-create the bot to update translations
@@ -97,6 +100,19 @@ class ProcessMessages {
             $bot->send_message(__('Error', 'makarski-bot-connector-for-telegram'));
         }
 
+    }
+
+    /**
+     * Raw Telegram language_code of the current update's sender, if any.
+     */
+    private static function request_language(): string {
+        $r = self::$bot->request_respond ?? null;
+
+        $code = $r->message->from->language_code
+            ?? $r->callback_query->from->language_code
+            ?? '';
+
+        return sanitize_text_field((string) $code);
     }
 
     /**
@@ -166,6 +182,30 @@ class ProcessMessages {
                 // Mark as connector-created so Privacy can hide the account
                 // from public surfaces (author archive, REST, sitemap).
                 update_user_meta($user_id, Privacy::MARKER_META, 1);
+
+                // Analytics: register the chat with first-touch source and
+                // arrival language; a ref_<code> payload records a referral.
+                $payload = Analytics::start_payload((string) (self::$bot->request_respond->message->text ?? ''));
+
+                Analytics::record_user(
+                    (int) $tg_id,
+                    (int) $user_id,
+                    Analytics::normalize_source($payload),
+                    sanitize_text_field($user_data->language_code ?? '')
+                );
+
+                if ($payload) {
+                    Analytics::record_referral((int) $tg_id, $payload);
+                }
+
+                /**
+                 * A WP user was just created for a new Telegram chat.
+                 *
+                 * @param int         $user_id   The new WP user ID.
+                 * @param int         $tg_id     Telegram chat ID.
+                 * @param object|null $user_data Telegram 'from' object (may be null).
+                 */
+                do_action('tgbot_user_registered', (int) $user_id, (int) $tg_id, $user_data);
 
                 return [
                     'success' => true,
