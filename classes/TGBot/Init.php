@@ -162,21 +162,36 @@ class Init {
         return $query_vars;
     }
 
+    /**
+     * Answer the webhook request immediately and keep processing in the
+     * background. Telegram queues updates per chat and won't deliver the
+     * next one until this HTTP request finishes — a held connection
+     * serializes all processing.
+     */
     public static function finish_request(): void {
         ob_start();
         echo 'OK';
-        $size = ob_get_length();
+        $size = (int) ob_get_length();
 
         header( 'Content-Encoding: none' );
         header( 'Content-Length: ' . $size );
         header( 'Connection: close' );
         ignore_user_abort( true );
 
-        ob_end_flush();
+        // Flush every buffer level — with output_buffering enabled the
+        // payload would land in an outer buffer instead of the client.
+        while ( ob_get_level() > 0 ) {
+            ob_end_flush();
+        }
         flush();
 
+        // LiteSpeed has no fastcgi_finish_request() — its equivalent is
+        // litespeed_finish_request(); without it the connection stays open
+        // for the whole handler run.
         if ( function_exists( 'fastcgi_finish_request' ) ) {
             fastcgi_finish_request();
+        } elseif ( function_exists( 'litespeed_finish_request' ) ) {
+            litespeed_finish_request();
         }
     }
 
