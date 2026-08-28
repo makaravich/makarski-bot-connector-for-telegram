@@ -1112,7 +1112,63 @@ class BotApi {
 	 * @param array  $data Request parameters.
 	 * @return mixed Decoded response object.
 	 */
+	/**
+	 * When the bot is disabled (gen_tg_enabled off / tgbot_can_send() false),
+	 * suppress user-facing API calls and prime last_request_response with a
+	 * distinguishable object: ok=false plus tgbot_disabled=true, so consumers
+	 * can tell "bot is off" from "Telegram refused" (e.g. a user who blocked
+	 * the bot) and not mislabel real people.
+	 *
+	 * Administrative calls (getMe, webhook management, getUpdates,
+	 * setMyCommands, getChatMember, …) are never suppressed — the admin UI
+	 * must keep working while the bot is off.
+	 *
+	 * @param string $url Full API URL of the call.
+	 */
+	private function is_sending_suppressed( string $url ): bool {
+		if ( tgbot_can_send() || ! self::is_user_facing_method( $url ) ) {
+			return false;
+		}
+
+		$this->last_request_response = (object) array(
+			'ok'             => false,
+			'error_code'     => 0,
+			'tgbot_disabled' => true,
+			'description'    => 'Sending suppressed: the bot is disabled in Telegram Bot settings (gen_tg_enabled).',
+		);
+
+		return true;
+	}
+
+	/**
+	 * Whether the API method delivers content to chats (as opposed to
+	 * administrative calls, which must work while the bot is disabled).
+	 *
+	 * @param string $url Full API URL of the call.
+	 */
+	private static function is_user_facing_method( string $url ): bool {
+		$method = strtolower( (string) preg_replace( '#^.*/#', '', (string) strtok( $url, '?' ) ) );
+
+		if ( 'deletewebhook' === $method ) {
+			return false; // Administrative despite the prefix.
+		}
+
+		// refundStarPayment is intentionally not listed: refunding money is an
+		// administrative action that must work while the bot is off.
+		foreach ( array( 'send', 'edit', 'delete', 'forward', 'copy', 'answer', 'pin', 'unpin' ) as $prefix ) {
+			if ( str_starts_with( $method, $prefix ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private function send_request( string $url, array $data = [] ): mixed {
+		if ( $this->is_sending_suppressed( $url ) ) {
+			return $this->last_request_response;
+		}
+
 		$response = wp_remote_post(
 			$url,
 			array(
@@ -1167,6 +1223,10 @@ class BotApi {
 	 * @return mixed Decoded response object.
 	 */
 	private function send_multipart_request( string $url, array $data ): mixed {
+		if ( $this->is_sending_suppressed( $url ) ) {
+			return $this->last_request_response;
+		}
+
 		$multipart_data = $data;
 
 		$inject_multipart = function ( $handle ) use ( $multipart_data ) {

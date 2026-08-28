@@ -20,6 +20,25 @@ if (!function_exists('tgbot_get_option')) {
     }
 }
 
+if (!function_exists('tgbot_can_send')) {
+    /**
+     * Single source of truth for "is the bot allowed to send messages".
+     *
+     * Consumers (child plugins with their own cron/notification paths) should
+     * call this instead of reading the option directly. BotApi checks it too,
+     * so all user-facing API calls are suppressed while the bot is disabled —
+     * a dev copy restored from a production dump contains live chat_ids, and
+     * without this gate a disabled bot kept writing to real people.
+     *
+     * Filterable: add_filter( 'tgbot_can_send', ... ) to override.
+     */
+    function tgbot_can_send(): bool {
+        $enabled = (bool) ( tgbot_get_option( 'gen_tg_enabled' ) ?? true );
+
+        return (bool) apply_filters( 'tgbot_can_send', $enabled );
+    }
+}
+
 if (!function_exists('tgbot_sanitize_endpoint')) {
     /**
      * Normalize the webhook endpoint path.

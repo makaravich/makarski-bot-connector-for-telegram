@@ -420,6 +420,7 @@ See [readme.txt](readme.txt) for full changelog.
 - `send_message()` / `send_plain_message()` / `send_markdown_message()`: text over 4096 UTF-16 units is auto-split into several messages (HTML tags balanced per chunk, `reply_markup` on the last one)
 - Broadcast admin UI: HTML format no longer stripped to plain text (`wp_kses` with the Telegram tag whitelist)
 - Fix: empty Date in user-profile Broadcast History for pending/failed rows
+- "Enable bot" now gates outgoing messages too — while disabled, user-facing API calls return `ok=false` with `tgbot_disabled=true` (admin calls keep working); new `tgbot_can_send()` helper for child plugins (filter: `tgbot_can_send`)
 
 ### 0.3.3
 
