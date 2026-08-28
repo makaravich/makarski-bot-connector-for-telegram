@@ -20,6 +20,26 @@ if (!function_exists('tgbot_get_option')) {
     }
 }
 
+if (!function_exists('tgbot_sanitize_endpoint')) {
+    /**
+     * Normalize the webhook endpoint path.
+     *
+     * The endpoint is embedded verbatim into a rewrite regex ('^' . $endpoint . '/?$').
+     * A trailing slash produces '^path//?$' which never matches, because
+     * WP::parse_request() compares against a slash-trimmed request path —
+     * the webhook then silently returns 404 while everything looks configured.
+     * Whitespace and regex metacharacters would corrupt the rule the same way,
+     * so only URL-path-safe literal characters are kept.
+     */
+    function tgbot_sanitize_endpoint(string $value): string {
+        $value = sanitize_text_field($value);
+        $value = preg_replace('#[^A-Za-z0-9_/-]+#', '', $value);
+        $value = preg_replace('#/{2,}#', '/', $value);
+
+        return trim($value, '/');
+    }
+}
+
 if (!function_exists('tgbot_get_webhook_secret')) {
     function tgbot_get_webhook_secret(): string {
         $secret = get_option('tgbot_webhook_secret', '');
@@ -305,7 +325,7 @@ function tgbot_sanitize_options($input): array {
     }
 
     if (isset($input['gen_tg_endpoint'])) {
-        $clean['gen_tg_endpoint'] = sanitize_text_field($input['gen_tg_endpoint']);
+        $clean['gen_tg_endpoint'] = tgbot_sanitize_endpoint($input['gen_tg_endpoint']);
     }
 
     $clean['gen_tg_mode'] = in_array($input['gen_tg_mode'] ?? '', ['webhook', 'polling'], true)

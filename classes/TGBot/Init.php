@@ -134,7 +134,16 @@ class Init {
      * @return void
      */
     public static function custom_rewrite_rule(): void {
-        $regex = '^' . tgbot_get_option( 'gen_tg_endpoint' ) . '/?$';
+        // Re-trim here as well: values saved before the sanitizer normalized
+        // slashes may still carry a trailing '/' which breaks the regex.
+        $endpoint = trim( (string) tgbot_get_option( 'gen_tg_endpoint' ), '/' );
+
+        // Without an endpoint the rule would be '^/?$' and hijack the homepage.
+        if ( '' === $endpoint ) {
+            return;
+        }
+
+        $regex = '^' . $endpoint . '/?$';
 
         add_rewrite_rule($regex, 'index.php?tgbot_action=tg_call', 'top');
     }
