@@ -66,6 +66,7 @@ register_activation_hook( __FILE__, function () {
 // Handles plugin updates without requiring deactivation/reactivation.
 add_action( 'plugins_loaded', function () {
 	\TGBot\Broadcast::maybe_upgrade_db();
+	\TGBot\Privacy::maybe_backfill_marker();
 } );
 
 // Deactivation: stop polling cron
@@ -75,3 +76,7 @@ register_deactivation_hook( __FILE__, function () {
 
 // Run the bot
 new \TGBot\Init();
+
+// Hide connector-created bot users from public surfaces
+// (disable with: add_filter( 'tgbot_protect_bot_users', '__return_false' )).
+\TGBot\Privacy::init();

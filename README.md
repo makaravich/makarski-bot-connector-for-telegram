@@ -414,6 +414,13 @@ Or set up a real system cron:
 
 See [readme.txt](readme.txt) for full changelog.
 
+### 0.3.4 (unreleased)
+
+- **Privacy:** connector-created bot users are hidden from public surfaces — author archive (`/author/<chat_id>/`, `?author=<ID>`) returns a real 404, bot users are excluded from the users sitemap and the public REST users collection; human authors unaffected; disable with `add_filter( 'tgbot_protect_bot_users', '__return_false' )`
+- `send_message()` / `send_plain_message()` / `send_markdown_message()`: text over 4096 UTF-16 units is auto-split into several messages (HTML tags balanced per chunk, `reply_markup` on the last one)
+- Broadcast admin UI: HTML format no longer stripped to plain text (`wp_kses` with the Telegram tag whitelist)
+- Fix: empty Date in user-profile Broadcast History for pending/failed rows
+
 ### 0.3.3
 
 - New `BotApi::get_chat_member()` — chat member info with `status` (creator / administrator / member / restricted / left / kicked), `null` on failure

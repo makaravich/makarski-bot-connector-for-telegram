@@ -163,6 +163,10 @@ class ProcessMessages {
 
                 update_user_meta($user_id, 'tg_nickname', sanitize_user($user_data->username ?? null));
 
+                // Mark as connector-created so Privacy can hide the account
+                // from public surfaces (author archive, REST, sitemap).
+                update_user_meta($user_id, Privacy::MARKER_META, 1);
+
                 return [
                     'success' => true,
                     'user_id' => $user_id,
