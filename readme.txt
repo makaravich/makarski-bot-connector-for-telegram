@@ -148,6 +148,9 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 
 == Changelog ==
 
+= 0.3.4 =
+* BotApi: `send_message()`, `send_plain_message()`, `send_markdown_message()` auto-split text longer than the Telegram limit (4096 UTF-16 code units) into several messages — split prefers paragraph, then line, then word boundaries; HTML tags left open at a boundary are closed and re-opened so every chunk stays valid; `reply_markup` is attached to the last chunk. Previously such messages were rejected by Telegram ("message is too long") and silently lost.
+
 = 0.3.3 =
 * BotApi: new `get_chat_member()` method — returns ChatMember object (status: creator, administrator, member, restricted, left, kicked); returns null on failure
 * BotApi: `update_chat_id()` now also reads `my_chat_member->chat->id` — enables processing of bot-added-to-group updates

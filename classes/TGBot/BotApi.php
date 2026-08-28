@@ -7,6 +7,15 @@ namespace TGBot;
  */
 class BotApi {
 
+	/** Telegram sendMessage hard limit, in UTF-16 code units. */
+	public const TG_TEXT_LIMIT = 4096;
+
+	/**
+	 * Auto-split threshold, in UTF-16 code units. Kept below TG_TEXT_LIMIT to
+	 * leave headroom for HTML tags re-opened/closed on chunk boundaries.
+	 */
+	private const SPLIT_LIMIT = 3800;
+
 	/** @var string Bot token. */
 	private string $token;
 
@@ -122,6 +131,12 @@ class BotApi {
 	/**
 	 * Send a text message.
 	 *
+	 * Text longer than the Telegram limit (4096 UTF-16 code units) is split
+	 * into several messages at paragraph/line/word boundaries; HTML tags left
+	 * open at a boundary are closed and re-opened so each chunk stays valid.
+	 * $reply_markup is attached to the last chunk, $reply_to_message_id to the
+	 * first one. The returned response is the one of the last sent chunk.
+	 *
 	 * @param string      $message              Message text (HTML allowed).
 	 * @param string      $chat_id              Target chat ID; defaults to current chat.
 	 * @param array|null  $reply_markup         Optional inline keyboard markup.
@@ -133,21 +148,31 @@ class BotApi {
 			$chat_id = $this->chat_id;
 		}
 
-		$data = array(
-			'chat_id'    => $chat_id,
-			'text'       => $message,
-			'parse_mode' => 'HTML',
-		);
+		// Telegram rejects longer texts with "Bad Request: message is too
+		// long" and the message would be silently lost — send in chunks.
+		$chunks     = self::balance_html_chunks( self::split_long_text( (string) $message, self::SPLIT_LIMIT ) );
+		$last_index = count( $chunks ) - 1;
+		$result     = null;
 
-		if ( $reply_markup ) {
-			$data['reply_markup'] = wp_json_encode( $reply_markup );
+		foreach ( $chunks as $i => $chunk ) {
+			$data = array(
+				'chat_id'    => $chat_id,
+				'text'       => $chunk,
+				'parse_mode' => 'HTML',
+			);
+
+			if ( $reply_markup && $i === $last_index ) {
+				$data['reply_markup'] = wp_json_encode( $reply_markup );
+			}
+
+			if ( $reply_to_message_id && 0 === $i ) {
+				$data['reply_parameters'] = wp_json_encode( array( 'message_id' => $reply_to_message_id ) );
+			}
+
+			$result = $this->send_request( $this->api_url . 'sendMessage', $data );
 		}
 
-		if ( $reply_to_message_id ) {
-			$data['reply_parameters'] = wp_json_encode( array( 'message_id' => $reply_to_message_id ) );
-		}
-
-		return $this->send_request( $this->api_url . 'sendMessage', $data );
+		return $result;
 	}
 
 	/**
@@ -162,13 +187,20 @@ class BotApi {
 			$chat_id = $this->chat_id;
 		}
 
-		return $this->send_request(
-			$this->api_url . 'sendMessage',
-			array(
-				'chat_id' => $chat_id,
-				'text'    => $message,
-			)
-		);
+		// Over-limit text is auto-split — see send_message().
+		$result = null;
+
+		foreach ( self::split_long_text( (string) $message, self::SPLIT_LIMIT ) as $chunk ) {
+			$result = $this->send_request(
+				$this->api_url . 'sendMessage',
+				array(
+					'chat_id' => $chat_id,
+					'text'    => $chunk,
+				)
+			);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -184,17 +216,225 @@ class BotApi {
 			$chat_id = $this->chat_id;
 		}
 
-		$data = array(
-			'chat_id'    => $chat_id,
-			'text'       => $this->escape_markdown_v2( $message ),
-			'parse_mode' => 'MarkdownV2',
-		);
+		// Over-limit text is auto-split at paragraph/line/word boundaries
+		// (a MarkdownV2 entity spanning a paragraph break may still be cut —
+		// unlike HTML chunks, Markdown chunks are not re-balanced).
+		$chunks     = self::split_long_text( $this->escape_markdown_v2( $message ), self::SPLIT_LIMIT );
+		$last_index = count( $chunks ) - 1;
+		$result     = null;
 
-		if ( $reply_markup ) {
-			$data['reply_markup'] = wp_json_encode( $reply_markup );
+		foreach ( $chunks as $i => $chunk ) {
+			$data = array(
+				'chat_id'    => $chat_id,
+				'text'       => $chunk,
+				'parse_mode' => 'MarkdownV2',
+			);
+
+			if ( $reply_markup && $i === $last_index ) {
+				$data['reply_markup'] = wp_json_encode( $reply_markup );
+			}
+
+			$result = $this->send_request( $this->api_url . 'sendMessage', $data );
 		}
 
-		return $this->send_request( $this->api_url . 'sendMessage', $data );
+		return $result;
+	}
+
+	/**
+	 * Text length in UTF-16 code units — the units Telegram's 4096 limit is
+	 * measured in (an emoji outside the BMP counts as 2, unlike mb_strlen()).
+	 *
+	 * @param string $text Text to measure.
+	 * @return int Length in UTF-16 code units.
+	 */
+	private static function utf16_length( string $text ): int {
+		return (int) ( strlen( mb_convert_encoding( $text, 'UTF-16BE', 'UTF-8' ) ) / 2 );
+	}
+
+	/**
+	 * Split text into chunks of at most $limit UTF-16 code units, preferring
+	 * paragraph breaks, then line breaks, then spaces; a single oversized
+	 * word is hard-cut as a last resort.
+	 *
+	 * @param string $text  Text to split.
+	 * @param int    $limit Chunk limit in UTF-16 code units.
+	 * @return string[] Chunks in original order.
+	 */
+	private static function split_long_text( string $text, int $limit ): array {
+		return self::split_recursive( $text, $limit, array( "\n\n", "\n", ' ' ) );
+	}
+
+	/**
+	 * @param string   $text       Text to split.
+	 * @param int      $limit      Chunk limit in UTF-16 code units.
+	 * @param string[] $separators Boundary preference order, best first.
+	 * @return string[]
+	 */
+	private static function split_recursive( string $text, int $limit, array $separators ): array {
+		if ( self::utf16_length( $text ) <= $limit ) {
+			return array( $text );
+		}
+
+		if ( empty( $separators ) ) {
+			return self::hard_cut( $text, $limit );
+		}
+
+		$sep   = array_shift( $separators );
+		$parts = explode( $sep, $text );
+
+		if ( ' ' === $sep ) {
+			$parts = self::merge_broken_tags( $parts );
+		}
+
+		if ( count( $parts ) === 1 ) {
+			return self::split_recursive( $text, $limit, $separators );
+		}
+
+		$chunks  = array();
+		$current = '';
+
+		foreach ( $parts as $part ) {
+			$candidate = ( '' === $current ) ? $part : $current . $sep . $part;
+
+			if ( self::utf16_length( $candidate ) <= $limit ) {
+				$current = $candidate;
+				continue;
+			}
+
+			if ( '' !== $current ) {
+				$chunks[] = $current;
+			}
+
+			if ( self::utf16_length( $part ) <= $limit ) {
+				$current = $part;
+			} else {
+				$sub     = self::split_recursive( $part, $limit, $separators );
+				$current = array_pop( $sub );
+				$chunks  = array_merge( $chunks, $sub );
+			}
+		}
+
+		if ( '' !== $current ) {
+			$chunks[] = $current;
+		}
+
+		return $chunks;
+	}
+
+	/**
+	 * Re-join space-separated tokens while the last '<' in the buffer is not
+	 * yet closed by '>', so a word-level split can't cut inside an HTML tag
+	 * such as <a href="…">.
+	 *
+	 * @param string[] $parts Tokens produced by explode( ' ', … ).
+	 * @return string[]
+	 */
+	private static function merge_broken_tags( array $parts ): array {
+		$merged = array();
+		$buffer = '';
+
+		foreach ( $parts as $part ) {
+			$buffer = ( '' === $buffer ) ? $part : $buffer . ' ' . $part;
+
+			$lt = strrpos( $buffer, '<' );
+			$gt = strrpos( $buffer, '>' );
+
+			if ( false !== $lt && ( false === $gt || $lt > $gt ) ) {
+				continue; // Inside an unfinished tag — keep merging.
+			}
+
+			$merged[] = $buffer;
+			$buffer   = '';
+		}
+
+		if ( '' !== $buffer ) {
+			$merged[] = $buffer;
+		}
+
+		return $merged;
+	}
+
+	/**
+	 * Cut text into chunks of at most $limit UTF-16 code units without
+	 * splitting a surrogate pair (i.e. never inside a single character).
+	 *
+	 * @param string $text  Text to cut.
+	 * @param int    $limit Chunk limit in UTF-16 code units.
+	 * @return string[]
+	 */
+	private static function hard_cut( string $text, int $limit ): array {
+		$chunks = array();
+		$u16    = mb_convert_encoding( $text, 'UTF-16BE', 'UTF-8' );
+
+		while ( strlen( $u16 ) > $limit * 2 ) {
+			$bytes = $limit * 2;
+			$unit  = unpack( 'n', substr( $u16, $bytes - 2, 2 ) )[1];
+
+			if ( $unit >= 0xD800 && $unit <= 0xDBFF ) { // High surrogate — keep the pair together.
+				$bytes -= 2;
+			}
+
+			$chunks[] = mb_convert_encoding( substr( $u16, 0, $bytes ), 'UTF-8', 'UTF-16BE' );
+			$u16      = substr( $u16, $bytes );
+		}
+
+		$chunks[] = mb_convert_encoding( $u16, 'UTF-8', 'UTF-16BE' );
+
+		return $chunks;
+	}
+
+	/**
+	 * Close HTML tags left open at the end of each chunk and re-open them at
+	 * the start of the next one, so parse_mode=HTML stays valid per message.
+	 * No-op for a single chunk (unsplit text is sent byte-identical).
+	 *
+	 * @param string[] $chunks Chunks produced by split_long_text().
+	 * @return string[]
+	 */
+	private static function balance_html_chunks( array $chunks ): array {
+		if ( count( $chunks ) < 2 ) {
+			return $chunks;
+		}
+
+		$supported = array( 'b', 'strong', 'i', 'em', 'u', 'ins', 's', 'strike', 'del', 'a', 'code', 'pre', 'span', 'tg-spoiler', 'blockquote' );
+		$stack     = array(); // Open tags carried across chunks: name + full opening tag markup.
+
+		foreach ( $chunks as $idx => $chunk ) {
+			$prefix = implode( '', array_column( $stack, 'html' ) );
+
+			if ( preg_match_all( '#<(/?)([a-z][a-z0-9-]*)(\s[^>]*)?>#i', $chunk, $matches, PREG_SET_ORDER ) ) {
+				foreach ( $matches as $m ) {
+					$name = strtolower( $m[2] );
+
+					if ( ! in_array( $name, $supported, true ) ) {
+						continue;
+					}
+
+					if ( '/' === $m[1] ) {
+						for ( $i = count( $stack ) - 1; $i >= 0; $i-- ) {
+							if ( $stack[ $i ]['name'] === $name ) {
+								array_splice( $stack, $i, 1 );
+								break;
+							}
+						}
+					} else {
+						$stack[] = array(
+							'name' => $name,
+							'html' => $m[0],
+						);
+					}
+				}
+			}
+
+			$suffix = '';
+			for ( $i = count( $stack ) - 1; $i >= 0; $i-- ) {
+				$suffix .= '</' . $stack[ $i ]['name'] . '>';
+			}
+
+			$chunks[ $idx ] = $prefix . $chunk . $suffix;
+		}
+
+		return $chunks;
 	}
 
 	/**

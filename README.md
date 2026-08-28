@@ -305,9 +305,9 @@ All methods are available on the `$bot` instance passed to hooks and command cal
 
 | Method | Description |
 |---|---|
-| `send_message( $text, $chat_id?, $reply_markup?, $reply_to_message_id? )` | Send HTML text message; pass `$reply_to_message_id` to reply to a specific message (Bot API 7.0+) |
-| `send_plain_message( $text, $chat_id? )` | Send plain text message (no parse_mode) |
-| `send_markdown_message( $text, $chat_id?, $reply_markup? )` | Send MarkdownV2 message |
+| `send_message( $text, $chat_id?, $reply_markup?, $reply_to_message_id? )` | Send HTML text message; pass `$reply_to_message_id` to reply to a specific message (Bot API 7.0+). Text over the Telegram limit (4096 UTF-16 units) is auto-split into several messages at paragraph/line/word boundaries, HTML tags are closed/re-opened per chunk, `$reply_markup` goes on the last chunk |
+| `send_plain_message( $text, $chat_id? )` | Send plain text message (no parse_mode); over-limit text is auto-split |
+| `send_markdown_message( $text, $chat_id?, $reply_markup? )` | Send MarkdownV2 message; over-limit text is auto-split (`$reply_markup` on the last chunk) |
 | `send_chat_action( $action, $chat_id? )` | Show typing/upload indicator. Actions: `typing`, `upload_photo`, `record_voice`, `upload_voice`, `upload_document`, `find_location` |
 
 ### Sending media
