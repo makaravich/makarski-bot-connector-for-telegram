@@ -549,7 +549,7 @@ class Broadcast {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT r.id, r.broadcast_id, r.status, r.sent_at, r.error,
-				        j.created_at, j.format, j.messages_json
+				        j.created_at AS job_created, j.format, j.messages_json
 				 FROM %i r
 				 INNER JOIN %i j ON j.id = r.broadcast_id
 				 WHERE r.user_id = %d
