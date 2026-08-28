@@ -192,7 +192,7 @@ class Privacy {
 		if ( empty( $args['meta_query'] ) ) {
 			$args['meta_query'] = [ $clause ]; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- NOT EXISTS on an indexed meta table, public surfaces only
 		} else {
-			$args['meta_query'] = [
+			$args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- NOT EXISTS on the indexed meta table, public surfaces only
 				'relation' => 'AND',
 				$args['meta_query'],
 				$clause,

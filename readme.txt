@@ -2,9 +2,9 @@
 Contributors: makaravich
 Tags: telegram, bot, messenger, chatbot, notifications
 Requires at least: 6.2
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 0.3.3
+Stable tag: 0.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -149,6 +149,7 @@ Yes, as a deprecated alias for `tgbot_message`. Migrate to `tgbot_message` — t
 == Changelog ==
 
 = 0.3.4 =
+* Compatibility: tested up to WordPress 7.1
 * **Privacy fix:** WordPress users auto-created by the connector for Telegram chats are no longer exposed on public site surfaces. Before this fix the author archive `/author/<chat_id>/` (and `?author=<ID>`) returned 200 with the chat_id in the page title, letting anyone confirm from outside whether a given Telegram account had contacted the bot. Bot-user author archives now return a genuine 404, and bot users are excluded from the core users sitemap and the public REST users collection. Real (human) author pages are not affected. Existing bot users are marked automatically on upgrade. Opt out with `add_filter( 'tgbot_protect_bot_users', '__return_false' )`.
 * BotApi: `send_message()`, `send_plain_message()`, `send_markdown_message()` auto-split text longer than the Telegram limit (4096 UTF-16 code units) into several messages — split prefers paragraph, then line, then word boundaries; HTML tags left open at a boundary are closed and re-opened so every chunk stays valid; `reply_markup` is attached to the last chunk. Previously such messages were rejected by Telegram ("message is too long") and silently lost.
 * Broadcast admin UI: the "HTML" format works now — message text was run through `sanitize_textarea_field()`, which strips all tags, so HTML broadcasts arrived unformatted; HTML messages are now sanitized with `wp_kses()` against the Telegram-supported tag whitelist

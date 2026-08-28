@@ -2,7 +2,7 @@
 
 WordPress plugin that connects your site to a Telegram bot. Handles all Telegram Bot API communication so you can focus on your bot's logic using familiar WordPress hooks and filters.
 
-**Version:** 0.3.3 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
+**Version:** 0.3.4 · **Requires:** WordPress 6.2+, PHP 8.0+ · **License:** GPLv2
 
 ---
 
@@ -414,7 +414,7 @@ Or set up a real system cron:
 
 See [readme.txt](readme.txt) for full changelog.
 
-### 0.3.4 (unreleased)
+### 0.3.4
 
 - **Privacy:** connector-created bot users are hidden from public surfaces — author archive (`/author/<chat_id>/`, `?author=<ID>`) returns a real 404, bot users are excluded from the users sitemap and the public REST users collection; human authors unaffected; disable with `add_filter( 'tgbot_protect_bot_users', '__return_false' )`
 - `send_message()` / `send_plain_message()` / `send_markdown_message()`: text over 4096 UTF-16 units is auto-split into several messages (HTML tags balanced per chunk, `reply_markup` on the last one)
