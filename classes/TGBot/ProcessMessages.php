@@ -22,6 +22,15 @@ class ProcessMessages {
         self::$bot = $bot;
         $chat_id = $bot->chat_id;
 
+        // Handle bot membership changes (added to / removed from a group).
+        if ( isset( $bot->request_respond->my_chat_member ) && $chat_id ) {
+            $group_wp_user_id = self::get_user_from_chat_id( $chat_id );
+            if ( is_int( $group_wp_user_id ) && $group_wp_user_id > 0 ) {
+                do_action( 'tgbot_my_chat_member', $bot, $group_wp_user_id, $bot->request_respond->my_chat_member );
+            }
+            return;
+        }
+
         // Return if it is a direct call
         if (!$chat_id) {
             return;
