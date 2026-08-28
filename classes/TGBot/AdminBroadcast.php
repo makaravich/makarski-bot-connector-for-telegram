@@ -47,22 +47,44 @@ class AdminBroadcast {
 			}
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via sanitize_text_field/sanitize_textarea_field in the loop below
-		$raw_messages = isset( $_POST['messages'] ) ? (array) wp_unslash( $_POST['messages'] ) : [];
-		$messages     = [];
-		foreach ( $raw_messages as $locale => $text ) {
-			$locale              = sanitize_text_field( $locale );
-			$messages[ $locale ] = sanitize_textarea_field( $text );
-		}
-
-		if ( empty( $messages ) ) {
-			wp_send_json_error( [ 'message' => __( 'No message text provided.', 'makarski-bot-connector-for-telegram' ) ] );
-		}
-
 		$allowed_formats = [ 'plain', 'html', 'markdown' ];
 		$format          = sanitize_text_field( wp_unslash( $_POST['format'] ?? 'plain' ) );
 		if ( ! in_array( $format, $allowed_formats, true ) ) {
 			$format = 'plain';
+		}
+
+		// Telegram HTML supports a narrow tag set — keep exactly those and
+		// strip everything else. sanitize_textarea_field() would strip ALL
+		// tags, silently turning an HTML broadcast into plain text.
+		$allowed_html = [
+			'b'          => [],
+			'strong'     => [],
+			'i'          => [],
+			'em'         => [],
+			'u'          => [],
+			'ins'        => [],
+			's'          => [],
+			'strike'     => [],
+			'del'        => [],
+			'code'       => [],
+			'pre'        => [],
+			'blockquote' => [],
+			'span'       => [ 'class' => [] ], // <span class="tg-spoiler">
+			'a'          => [ 'href' => [] ],
+		];
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via wp_kses/sanitize_textarea_field in the loop below
+		$raw_messages = isset( $_POST['messages'] ) ? (array) wp_unslash( $_POST['messages'] ) : [];
+		$messages     = [];
+		foreach ( $raw_messages as $locale => $text ) {
+			$locale              = sanitize_text_field( $locale );
+			$messages[ $locale ] = ( 'html' === $format )
+				? wp_kses( $text, $allowed_html )
+				: sanitize_textarea_field( $text );
+		}
+
+		if ( empty( $messages ) ) {
+			wp_send_json_error( [ 'message' => __( 'No message text provided.', 'makarski-bot-connector-for-telegram' ) ] );
 		}
 
 		$job_id = Broadcast::create_job( $messages, $format, array_values( $user_ids ) );
