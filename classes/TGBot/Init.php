@@ -6,9 +6,13 @@ class Init {
     public array $bot_map = [];
 
     public function __construct() {
+        // No __() here: the constructor runs at plugin-file load, long before
+        // 'init'. Translating the help message that early triggers WP 6.7+
+        // _load_textdomain_just_in_time notices on every request and fires
+        // the 'tgbot_help_message' filter before consumers could register it.
+        // The message is resolved lazily where a Bot is actually built.
         $this->bot_map = [
                 'auto_exec' => false,
-                'help_message' => self::get_help_message(),
         ];
 
         // Add styles and scripts on admin side
@@ -205,7 +209,11 @@ class Init {
                 exit;
             }
 
-            $bot = new Bot( tgbot_get_option( 'gen_tg_token' ), true, $this->bot_map );
+            $bot = new Bot(
+                tgbot_get_option( 'gen_tg_token' ),
+                true,
+                array_merge( $this->bot_map, [ 'help_message' => self::get_help_message() ] )
+            );
 
             $request_respond = $bot->get_request();
 
